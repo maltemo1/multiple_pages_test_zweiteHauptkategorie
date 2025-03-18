@@ -27,7 +27,7 @@ def create_nav_structure():
         "Länderanalyse": {
             "Gesamtüberblick seit 2008 bis 2024": {
                 "Gesamter Export-, Import- und Handelsvolumen-Verlauf mit Deutschland": "LA_gesamt_export_import_volumen",  # Hier hinzugefügt
-                "Vergleich mit anderen Ländern": "#",
+                "Vergleich mit anderen Ländern": "country_comparison",
                 "Export- und Importwachstumsrate": "#",
                 "Platzierung im Export- und Importranking Deutschlands": "#",
                 "Deutschlands Top 10 Waren im Handel": "#"
@@ -139,7 +139,7 @@ graph_modules = [
     "gesamt_export_import_volumen",
     "monthly_trade", "top_10_trade_partners", "top_diff_countries", 
     "top_growth_countries", "top_diff_goods", "top_growth_goods", "top_10_trade_goods",
-    "LA_gesamt_export_import_volumen"  # Hier neu hinzugefügt
+    "LA_gesamt_export_import_volumen", "country_comparison"  # Hier neu hinzugefügt
 ]
 
 for module_name in graph_modules:
