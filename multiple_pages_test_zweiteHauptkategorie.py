@@ -26,7 +26,7 @@ def create_nav_structure():
         },
         "Länderanalyse": {
             "Gesamtüberblick seit 2008 bis 2024": {
-                "Gesamter Export-, Import- und Handelsvolumen-Verlauf mit Deutschland": "#",
+                "Gesamter Export-, Import- und Handelsvolumen-Verlauf mit Deutschland": "LA_gesamt_export_import_volumen",  # Hier hinzugefügt
                 "Vergleich mit anderen Ländern": "#",
                 "Export- und Importwachstumsrate": "#",
                 "Platzierung im Export- und Importranking Deutschlands": "#",
@@ -134,10 +134,12 @@ def render_graph(pathname):
     except ModuleNotFoundError:
         return html.Div(f"Graph {graph_name} not found"), 404
 
-# Register Callbacks only for modules that have register_callbacks function
+# Dynamische Registrierung der Callbacks
 graph_modules = [
-    'monthly_trade', 'top_10_trade_partners', 'top_diff_countries', 
-    'top_growth_countries', 'top_diff_goods', 'top_growth_goods', 'top_10_trade_goods'
+    "gesamt_export_import_volumen",
+    "monthly_trade", "top_10_trade_partners", "top_diff_countries", 
+    "top_growth_countries", "top_diff_goods", "top_growth_goods", "top_10_trade_goods",
+    "LA_gesamt_export_import_volumen"  # Hier neu hinzugefügt
 ]
 
 for module_name in graph_modules:
