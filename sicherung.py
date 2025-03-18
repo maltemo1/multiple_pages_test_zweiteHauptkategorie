@@ -3,7 +3,6 @@ from dash import dcc, html
 import dash_bootstrap_components as dbc
 import importlib
 import os
-import glob
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
@@ -27,7 +26,49 @@ def create_nav_structure():
         },
         "Länderanalyse": {
             "Gesamtüberblick seit 2008 bis 2024": {
-                "Gesamter Export-, Import- und Handelsvolumen-Verlauf mit Deutschland": "export_import_with_germany"
+                "Gesamter Export-, Import- und Handelsvolumen-Verlauf mit Deutschland": "#",
+                "Vergleich mit anderen Ländern": "#",
+                "Export- und Importwachstumsrate": "#",
+                "Platzierung im Export- und Importranking Deutschlands": "#",
+                "Deutschlands Top 10 Waren im Handel": "#"
+            },
+            "Überblick nach bestimmtem Jahr": {
+                "Handelsbilanz & Ranking": "#",
+                "Monatlicher Handelsverlauf": "#",
+                "Top 10 Export- und Importwaren": "#",
+                "Top 4 Waren nach Differenz zum Vorjahr": "#",
+                "Top 4 Waren nach Wachstum zum Vorjahr": "#"
+            },
+            "Überblick nach bestimmter Ware": {
+                "Gesamter Export- und Importverlauf der Ware mit Deutschland": "#"
+            },
+            "Überblick nach bestimmtem Jahr und Ware": {
+                "Monatlicher Verlauf von Export- und Importwerten für die angegebene Ware im Jahr": "#"
+            },
+            "Überblick nach bestimmtem Zeitraum und Waren": {
+                "Export- und Importverlauf (jährlich) bestimmter Waren für ein bestimmtes Land": "#",
+                "Export- und Importverlauf (jährlich) einer bestimmten Ware für bestimmte Länder": "#"
+            }
+        },
+        "Warenanalyse": {
+            "Gesamtüberblick seit 2008 bis 2024": {
+                "Gesamter Export- und Importverlauf der Ware": "#",
+                "Deutschlands Top 5 Export- und Importländer der Ware": "#"
+            },
+            "Überblick mit mehreren Waren über bestimmten Zeitraum": {
+                "Gesamter Export- und Importverlauf der Waren (jährliche Werte)": "#",
+                "Gesamter Export- und Importverlauf der Waren (monatliche Werte)": "#"
+            },
+            "Überblick nach bestimmtem Jahr": {
+                "Ranking der Ware im Vergleich zu anderen Waren": "#",
+                "Monatlicher Export- und Importvolumen-Verlauf der Ware": "#"
+            },
+            "Überblick nach bestimmtem Land": {
+                "Gesamter Export- und Importverlauf der Ware von bzw. nach Deutschland": "#"
+            },
+            "Überblick nach bestimmtem Zeitraum und Land und Waren": {
+                "Export- und Importverlauf (jährlich) mehrerer Waren für ein bestimmtes Land": "#",
+                "Export- und Importverlauf (jährlich) einer bestimmten Ware für bestimmte Länder": "#"
             }
         }
     }
@@ -68,6 +109,7 @@ sidebar = html.Div([
 ], className="sidebar")
 
 app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),  # URL Tracker
     dbc.Container([
         dbc.Row([
             dbc.Col(sidebar, width=3),
@@ -82,17 +124,21 @@ app.layout = html.Div([
     [dash.dependencies.Input('url', 'pathname')]
 )
 def render_graph(pathname):
-    # Remove the leading '/' from the pathname
     graph_name = pathname.lstrip('/')
     try:
-        # Dynamically import the graph module
         graph_module = importlib.import_module(f'graphs.{graph_name}')
-        return graph_module.create_layout()
+        if hasattr(graph_module, 'create_layout'):
+            return graph_module.create_layout()
+        else:
+            return html.Div(f"Graph {graph_name} does not have a create_layout() function"), 404
     except ModuleNotFoundError:
-        return f"Graph {graph_name} not found", 404
+        return html.Div(f"Graph {graph_name} not found"), 404
 
-# Registriere Callbacks für alle Graph-Module, die eine register_callbacks-Funktion haben
-graph_modules = ['monthly_trade', 'top_10_trade_partners', 'top_diff_countries', 'top_growth_countries', 'top_diff_goods', 'top_growth_goods']  # Liste aller Graphen, die Callbacks haben
+# Register Callbacks only for modules that have register_callbacks function
+graph_modules = [
+    'monthly_trade', 'top_10_trade_partners', 'top_diff_countries', 
+    'top_growth_countries', 'top_diff_goods', 'top_growth_goods', 'top_10_trade_goods'
+]
 
 for module_name in graph_modules:
     try:
@@ -101,17 +147,6 @@ for module_name in graph_modules:
             module.register_callbacks(app)
     except ModuleNotFoundError:
         print(f"Module {module_name} not found.")
-
-# Add dcc.Location to allow URL navigation
-app.layout = html.Div([
-    dcc.Location(id='url', refresh=False),  # Added dcc.Location to track URL
-    dbc.Container([
-        dbc.Row([
-            dbc.Col(sidebar, width=3),
-            dbc.Col(html.Div(id="page-content"), width=9)
-        ])
-    ])
-])
 
 if __name__ == "__main__":
     app.run_server(debug=True)
