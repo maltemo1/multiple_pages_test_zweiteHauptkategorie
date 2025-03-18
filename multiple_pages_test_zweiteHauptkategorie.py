@@ -139,7 +139,7 @@ graph_modules = [
     "gesamt_export_import_volumen",
     "monthly_trade", "top_10_trade_partners", "top_diff_countries", 
     "top_growth_countries", "top_diff_goods", "top_growth_goods", "top_10_trade_goods",
-    "LA_gesamt_export_import_volumen", "country_comparison"  # Hier neu hinzugefügt
+    "LA_gesamt_export_import_volumen" #, "country_comparison"  # Hier neu hinzugefügt
 ]
 
 for module_name in graph_modules:
