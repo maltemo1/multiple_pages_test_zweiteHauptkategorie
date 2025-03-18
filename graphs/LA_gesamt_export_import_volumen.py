@@ -1,10 +1,3 @@
-from dash import dcc, html, callback
-from dash.dependencies import Input, Output
-import pandas as pd
-import plotly.graph_objects as go
-import numpy as np
-import math
-
 # Daten laden
 df_grouped = pd.read_csv('data/df_grouped.csv')
 
@@ -23,19 +16,20 @@ def formatter(value):
         return str(value)
 
 # Layout für die Multi-Page-App
-layout = html.Div([
-    html.H1("Deutschlands Handelsbeziehungen mit anderen Ländern"),
+def create_layout():
+    return html.Div([
+        html.H1("Deutschlands Handelsbeziehungen mit anderen Ländern"),
 
-    dcc.Dropdown(
-        id='land_dropdown',
-        options=[{'label': land, 'value': land} for land in länder_options],
-        value='Islamische Republik Iran',  # Standardwert
-        clearable=False,
-        style={'width': '50%'}
-    ),
+        dcc.Dropdown(
+            id='land_dropdown',
+            options=[{'label': land, 'value': land} for land in länder_options],
+            value='Islamische Republik Iran',  # Standardwert
+            clearable=False,
+            style={'width': '50%'}
+        ),
 
-    dcc.Graph(id='handel_graph'),
-])
+        dcc.Graph(id='handel_graph'),
+    ])
 
 # Callback für die Aktualisierung des Graphen
 @callback(
