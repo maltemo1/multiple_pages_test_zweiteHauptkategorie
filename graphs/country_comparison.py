@@ -6,13 +6,13 @@ import plotly.graph_objects as go
 import math
 import numpy as np
 
-# Daten laden
+# Load the data
 df_grouped = pd.read_csv('data/df_grouped.csv')
 
-# Einzigartige Länder alphabetisch sortieren
+# Unique countries sorted alphabetically
 länder_options = sorted(df_grouped['Land'].unique())
 
-# Funktion zur Formatierung der Y-Achse
+# Function for formatting the Y-axis
 def formatter(value):
     if value >= 1e9:
         return f'{value / 1e9:.1f} Mrd'
@@ -23,20 +23,18 @@ def formatter(value):
     else:
         return str(value)
 
-# Graph Layout erstellen
+# Create the layout for the graph
 def create_layout():
     return html.Div([
         html.H1("Deutschlands Handelsbeziehungen mit anderen Ländern (im Vergleich)"),
-
         dcc.Dropdown(
             id='land_dropdown',
             options=[{'label': land, 'value': land} for land in länder_options],
-            value=['Islamische Republik Iran', 'Irak', 'Katar'],  # Default Auswahl
-            multi=True,  # Mehrere Länder können ausgewählt werden
+            value=['Islamische Republik Iran', 'Irak', 'Katar'],  # Default selection
+            multi=True,  # Allow multiple countries to be selected
             clearable=False,
             style={'width': '50%'}
         ),
-
         html.Div([
             dcc.Graph(id='export_graph'),
             dcc.Graph(id='import_graph'),
@@ -44,6 +42,7 @@ def create_layout():
         ])
     ])
 
+# Callback to update the graphs based on selected countries
 @app.callback(
     [Output('export_graph', 'figure'),
      Output('import_graph', 'figure'),
@@ -51,20 +50,18 @@ def create_layout():
     Input('land_dropdown', 'value')
 )
 def update_graph(selected_countries):
-    # Farben für die Linien (damit jede Linie eine eigene Farbe bekommt)
     farben = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
 
     export_fig = go.Figure()
     import_fig = go.Figure()
     handelsvolumen_fig = go.Figure()
 
-    # Gehe durch jedes ausgewählte Land und füge die Linien zu den Graphen hinzu
     for i, country in enumerate(selected_countries):
         df_country = df_grouped[(df_grouped['Land'] == country) &
                                 (df_grouped['Jahr'] >= 2008) &
                                 (df_grouped['Jahr'] <= 2024)]
 
-        # Exportwert Graph
+        # Export value graph
         export_fig.add_trace(go.Scatter(
             x=df_country['Jahr'],
             y=df_country['export_wert'],
@@ -74,7 +71,7 @@ def update_graph(selected_countries):
             hovertemplate=f'<b>Exportvolumen</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
         ))
 
-        # Importwert Graph
+        # Import value graph
         import_fig.add_trace(go.Scatter(
             x=df_country['Jahr'],
             y=df_country['import_wert'],
@@ -84,7 +81,7 @@ def update_graph(selected_countries):
             hovertemplate=f'<b>Importvolumen</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
         ))
 
-        # Handelsvolumenwert Graph
+        # Trade volume graph
         handelsvolumen_fig.add_trace(go.Scatter(
             x=df_country['Jahr'],
             y=df_country['handelsvolumen_wert'],
@@ -94,45 +91,45 @@ def update_graph(selected_countries):
             hovertemplate=f'<b>Gesamthandelsvolumen</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
         ))
 
-    # Maximale Werte für Y-Achse bestimmen und Dynamik hinzufügen
+    # Determine max values for Y-axis and add dynamic steps
     max_export = df_grouped[['export_wert']].max().values[0]
     max_import = df_grouped[['import_wert']].max().values[0]
     max_handelsvolumen = df_grouped[['handelsvolumen_wert']].max().values[0]
 
     def get_dynamic_ticks(max_value):
         if max_value < 10e6:
-            step = 5e6   # < 10 Mio → 5 Mio Schritte
+            step = 5e6
         elif max_value < 50e6:
-            step = 10e6  # 10 Mio - 50 Mio → 10 Mio Schritte
+            step = 10e6
         elif max_value < 100e6:
-            step = 25e6  # 50 Mio - 100 Mio → 25 Mio Schritte
+            step = 25e6
         elif max_value < 250e6:
-            step = 50e6  # 100 Mio - 250 Mio → 50 Mio Schritte
+            step = 50e6
         elif max_value < 500e6:
-            step = 100e6  # 250 Mio - 500 Mio → 100 Mio Schritte
+            step = 100e6
         elif max_value < 1e9:
-            step = 250e6  # 500 Mio - 1 Mrd → 250 Mio Schritte
+            step = 250e6
         elif max_value < 5e9:
-            step = 500e6  # 1 Mrd - 5 Mrd → 500 Mio Schritte
+            step = 500e6
         elif max_value < 10e9:
-            step = 1e9  # 5 Mrd - 10 Mrd → 1 Mrd Schritte
+            step = 1e9
         elif max_value < 50e9:
-            step = 5e9  # 10 Mrd - 50 Mrd → 5 Mrd Schritte
+            step = 5e9
         elif max_value < 100e9:
-            step = 10e9  # 50 Mrd - 100 Mrd → 10 Mrd Schritte
+            step = 10e9
         else:
-            step = 25e9  # > 100 Mrd → 25 Mrd Schritte
+            step = 25e9
         rounded_max = math.ceil(max_value / step) * step
         tickvals = np.arange(0, rounded_max + step, step)
         ticktext = [formatter(val) for val in tickvals]
         return tickvals, ticktext
 
-    # Dynamische Y-Achse für jeden Graphen
+    # Update the Y-axes for each graph
     export_ticks, export_ticktext = get_dynamic_ticks(max_export)
     import_ticks, import_ticktext = get_dynamic_ticks(max_import)
     handelsvolumen_ticks, handelsvolumen_ticktext = get_dynamic_ticks(max_handelsvolumen)
 
-    # Layout für die Graphen
+    # Update the layouts for the graphs
     export_fig.update_layout(
         title='Exporte (2008-2024)',
         xaxis_title='Jahr',
