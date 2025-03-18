@@ -2,23 +2,9 @@ import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 import pandas as pd
-import plotly.express as px
-from statistics import mean
-import glob
-from statsmodels.tsa.seasonal import seasonal_decompose
-import seaborn as sns
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import to_rgba
-from matplotlib.ticker import FuncFormatter
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 import math
-import gdown
-import os
-
+import numpy as np
 
 # Daten laden
 df_grouped = pd.read_csv('data/df_grouped.csv')
@@ -37,28 +23,26 @@ def formatter(value):
     else:
         return str(value)
 
-# Dash-App erstellen
-app = dash.Dash(__name__)
-server = app.server
+# Graph Layout erstellen
+def create_layout():
+    return html.Div([
+        html.H1("Deutschlands Handelsbeziehungen mit anderen Ländern (im Vergleich)"),
 
-app.layout = html.Div([
-    html.H1("Deutschlands Handelsbeziehungen mit anderen Ländern (im Vergleich)"),
+        dcc.Dropdown(
+            id='land_dropdown',
+            options=[{'label': land, 'value': land} for land in länder_options],
+            value=['Islamische Republik Iran', 'Irak', 'Katar'],  # Default Auswahl
+            multi=True,  # Mehrere Länder können ausgewählt werden
+            clearable=False,
+            style={'width': '50%'}
+        ),
 
-    dcc.Dropdown(
-        id='land_dropdown',
-        options=[{'label': land, 'value': land} for land in länder_options],
-        value=['Islamische Republik Iran', 'Irak', 'Katar'],  # Default Auswahl
-        multi=True,  # Mehrere Länder können ausgewählt werden
-        clearable=False,
-        style={'width': '50%'}
-    ),
-
-    html.Div([
-        dcc.Graph(id='export_graph'),
-        dcc.Graph(id='import_graph'),
-        dcc.Graph(id='handelsvolumen_graph')
+        html.Div([
+            dcc.Graph(id='export_graph'),
+            dcc.Graph(id='import_graph'),
+            dcc.Graph(id='handelsvolumen_graph')
+        ])
     ])
-])
 
 @app.callback(
     [Output('export_graph', 'figure'),
@@ -174,6 +158,3 @@ def update_graph(selected_countries):
     )
 
     return export_fig, import_fig, handelsvolumen_fig
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
