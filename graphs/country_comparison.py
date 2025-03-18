@@ -5,6 +5,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import math
 import numpy as np
+from multiple_pages_test_zweiteHauptkategorie import app
 
 # Load the data
 df_grouped = pd.read_csv('data/df_grouped.csv')
