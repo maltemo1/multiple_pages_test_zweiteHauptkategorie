@@ -1,3 +1,10 @@
+from dash import dcc, html, callback
+from dash.dependencies import Input, Output
+import pandas as pd
+import plotly.graph_objects as go
+import numpy as np
+import math
+
 # Daten laden
 df_grouped = pd.read_csv('data/df_grouped.csv')
 
