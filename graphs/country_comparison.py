@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import math
 import os
-from multiple_pages_test_zweiteHauptkategorie
+from multiple_pages_test_zweiteHauptkategorie import app
 from app import app
 
 # Daten laden
