@@ -1,15 +1,12 @@
-import dash
-from dash import dcc, html
+from dash import dcc, html, callback
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objects as go
+import numpy as np
 import math
-import os
-from multiple_pages_test_zweiteHauptkategorie import app
-from app import app
 
 # Daten laden
-df_grouped = pd.read_csv(os.path.join(os.getcwd(), 'data', 'df_grouped.csv'))
+df_grouped = pd.read_csv('data/df_grouped.csv')
 
 # Einzigartige Länder alphabetisch sortieren
 länder_options = sorted(df_grouped['Land'].unique())
@@ -25,86 +22,105 @@ def formatter(value):
     else:
         return str(value)
 
-# Layout für die Seite erstellen
+# Layout für die Multi-Page-App
 def create_layout():
     return html.Div([
-        html.H1("Deutschlands Handelsbeziehungen mit anderen Ländern (im Vergleich)"),
+        html.H1("Vergleich der Handelsverläufe mehrerer Länder mit Deutschland"),
 
         dcc.Dropdown(
             id='land_dropdown',
             options=[{'label': land, 'value': land} for land in länder_options],
-            value=['Islamische Republik Iran', 'Irak', 'Katar'],  # Default Auswahl
-            multi=True,  # Mehrere Länder können ausgewählt werden
+            value=['Islamische Republik Iran'],  # Standardwert
+            multi=True,  # Mehrfachauswahl aktivieren
             clearable=False,
-            style={'width': '50%'}
+            style={'width': '60%'}
         ),
 
-        html.Div([
-            dcc.Graph(id='export_graph'),
-            dcc.Graph(id='import_graph'),
-            dcc.Graph(id='handelsvolumen_graph')
-        ])
+        dcc.Graph(id='handel_comparison_graph'),
     ])
 
-# Callback für die Aktualisierung der Graphen
-@app.callback(
-    [Output('export_graph', 'figure'),
-     Output('import_graph', 'figure'),
-     Output('handelsvolumen_graph', 'figure')],
+# Callback für die Aktualisierung des Graphen
+@callback(
+    Output('handel_comparison_graph', 'figure'),
     Input('land_dropdown', 'value')
 )
 def update_graph(selected_countries):
-    # Farben für die Linien (damit jede Linie eine eigene Farbe bekommt)
-    farben = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
+    if not selected_countries:
+        return go.Figure()  # Leeres Diagramm, falls keine Auswahl
 
-    export_fig = go.Figure()
-    import_fig = go.Figure()
-    handelsvolumen_fig = go.Figure()
+    fig = go.Figure()
 
-    # Gehe durch jedes ausgewählte Land und füge die Linien zu den Graphen hinzu
-    for i, country in enumerate(selected_countries):
-        df_country = df_grouped[(df_grouped['Land'] == country) &
-                                (df_grouped['Jahr'] >= 2008) &
-                                (df_grouped['Jahr'] <= 2024)]
+    for country in selected_countries:
+        df_country = df_grouped[
+            (df_grouped['Land'] == country) &
+            (df_grouped['Jahr'] >= 2008) &
+            (df_grouped['Jahr'] <= 2024)
+        ]
 
-        # Exportwert Graph
-        export_fig.add_trace(go.Scatter(
-            x=df_country['Jahr'],
-            y=df_country['export_wert'],
-            mode='lines+markers',
-            name=country,
-            line=dict(width=2, color=farben[i % len(farben)]),
-            hovertemplate=f'<b>Exportvolumen</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
-        ))
+        for col, name, color in zip(
+            ['export_wert', 'import_wert', 'handelsvolumen_wert'],
+            ['Exportvolumen', 'Importvolumen', 'Gesamthandelsvolumen'],
+            ['#1f77b4', '#ff7f0e', '#2ca02c']
+        ):
+            fig.add_trace(go.Scatter(
+                x=df_country['Jahr'],
+                y=df_country[col],
+                mode='lines+markers',
+                name=f"{name} ({country})",
+                line=dict(width=2),
+                hovertemplate=f'<b>{name} ({country})</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
+            ))
 
-        # Importwert Graph
-        import_fig.add_trace(go.Scatter(
-            x=df_country['Jahr'],
-            y=df_country['import_wert'],
-            mode='lines+markers',
-            name=country,
-            line=dict(width=2, color=farben[i % len(farben)]),
-            hovertemplate=f'<b>Importvolumen</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
-        ))
+    # Maximale Werte bestimmen
+    max_value = df_grouped[df_grouped['Land'].isin(selected_countries)][
+        ['export_wert', 'import_wert', 'handelsvolumen_wert']
+    ].values.max()
 
-        # Handelsvolumen Graph
-        handelsvolumen_fig.add_trace(go.Scatter(
-            x=df_country['Jahr'],
-            y=df_country['handelsvolumen_wert'],
-            mode='lines+markers',
-            name=country,
-            line=dict(width=2, color=farben[i % len(farben)]),
-            hovertemplate=f'<b>Gesamthandelsvolumen</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
-        ))
+    # Dynamische Skalierung der Y-Achse
+    if max_value < 10e6:
+        step = 5e6
+    elif max_value < 50e6:
+        step = 10e6
+    elif max_value < 100e6:
+        step = 25e6
+    elif max_value < 250e6:
+        step = 50e6
+    elif max_value < 500e6:
+        step = 100e6
+    elif max_value < 1e9:
+        step = 250e6
+    elif max_value < 5e9:
+        step = 500e6
+    elif max_value < 10e9:
+        step = 1e9
+    elif max_value < 50e9:
+        step = 5e9
+    elif max_value < 100e9:
+        step = 10e9
+    else:
+        step = 25e9
 
-    # Layout der Graphen
-    for fig in [export_fig, import_fig, handelsvolumen_fig]:
-        fig.update_layout(
-            xaxis_title="Jahr",
-            yaxis_title="Wert in €",
-            yaxis=dict(tickformat=".0f"),
-            legend=dict(title="Länder", bgcolor='rgba(255,255,255,0.7)')
-        )
+    rounded_max = math.ceil(max_value / step) * step
 
-    return export_fig, import_fig, handelsvolumen_fig
+    tickvals = np.arange(0, rounded_max + step, step)
+    ticktext = [formatter(val) for val in tickvals]
 
+    fig.update_layout(
+        title=f'Handelsverläufe mit Deutschland (2008-2024)',
+        xaxis_title='Jahr',
+        yaxis_title='Wert in €',
+        yaxis=dict(
+            tickvals=tickvals,
+            ticktext=ticktext
+        ),
+        legend=dict(title='Kategorie', bgcolor='rgba(255,255,255,0.7)')
+    )
+
+    return fig
+
+# Callback-Registrierung
+def register_callbacks(app):
+    app.callback(
+        Output('handel_comparison_graph', 'figure'),
+        Input('land_dropdown', 'value')
+    )(update_graph)
