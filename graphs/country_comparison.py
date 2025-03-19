@@ -36,19 +36,28 @@ def create_layout():
             style={'width': '60%'}
         ),
 
-        dcc.Graph(id='handel_comparison_graph'),
+        html.Div([
+            dcc.Graph(id='export_comparison_graph'),
+            dcc.Graph(id='import_comparison_graph'),
+            dcc.Graph(id='trade_comparison_graph'),
+        ])
     ])
 
-# Callback für die Aktualisierung des Graphen
+# Callback für die Aktualisierung der Graphen
 @callback(
-    Output('handel_comparison_graph', 'figure'),
+    [Output('export_comparison_graph', 'figure'),
+     Output('import_comparison_graph', 'figure'),
+     Output('trade_comparison_graph', 'figure')],
     Input('land_dropdown', 'value')
 )
 def update_graph(selected_countries):
     if not selected_countries:
-        return go.Figure()  # Leeres Diagramm, falls keine Auswahl
+        return go.Figure(), go.Figure(), go.Figure()  # Leere Diagramme, falls keine Auswahl
 
-    fig = go.Figure()
+    # Initialisieren der einzelnen Diagramme
+    export_fig = go.Figure()
+    import_fig = go.Figure()
+    trade_fig = go.Figure()
 
     for country in selected_countries:
         df_country = df_grouped[
@@ -57,19 +66,35 @@ def update_graph(selected_countries):
             (df_grouped['Jahr'] <= 2024)
         ]
 
-        for col, name, color in zip(
-            ['export_wert', 'import_wert', 'handelsvolumen_wert'],
-            ['Exportvolumen', 'Importvolumen', 'Gesamthandelsvolumen'],
-            ['#1f77b4', '#ff7f0e', '#2ca02c']
-        ):
-            fig.add_trace(go.Scatter(
-                x=df_country['Jahr'],
-                y=df_country[col],
-                mode='lines+markers',
-                name=f"{name} ({country})",
-                line=dict(width=2),
-                hovertemplate=f'<b>{name} ({country})</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
-            ))
+        # Export Graph
+        export_fig.add_trace(go.Scatter(
+            x=df_country['Jahr'],
+            y=df_country['export_wert'],
+            mode='lines+markers',
+            name=f"Exportvolumen ({country})",
+            line=dict(width=2),
+            hovertemplate=f'<b>Exportvolumen ({country})</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
+        ))
+
+        # Import Graph
+        import_fig.add_trace(go.Scatter(
+            x=df_country['Jahr'],
+            y=df_country['import_wert'],
+            mode='lines+markers',
+            name=f"Importvolumen ({country})",
+            line=dict(width=2),
+            hovertemplate=f'<b>Importvolumen ({country})</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
+        ))
+
+        # Trade Volume Graph
+        trade_fig.add_trace(go.Scatter(
+            x=df_country['Jahr'],
+            y=df_country['handelsvolumen_wert'],
+            mode='lines+markers',
+            name=f"Gesamthandelsvolumen ({country})",
+            line=dict(width=2),
+            hovertemplate=f'<b>Gesamthandelsvolumen ({country})</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
+        ))
 
     # Maximale Werte bestimmen
     max_value = df_grouped[df_grouped['Land'].isin(selected_countries)][
@@ -105,22 +130,25 @@ def update_graph(selected_countries):
     tickvals = np.arange(0, rounded_max + step, step)
     ticktext = [formatter(val) for val in tickvals]
 
-    fig.update_layout(
-        title=f'Handelsverläufe mit Deutschland (2008-2024)',
-        xaxis_title='Jahr',
-        yaxis_title='Wert in €',
-        yaxis=dict(
-            tickvals=tickvals,
-            ticktext=ticktext
-        ),
-        legend=dict(title='Kategorie', bgcolor='rgba(255,255,255,0.7)')
-    )
+    # Update für alle drei Graphen
+    for fig in [export_fig, import_fig, trade_fig]:
+        fig.update_layout(
+            xaxis_title='Jahr',
+            yaxis_title='Wert in €',
+            yaxis=dict(
+                tickvals=tickvals,
+                ticktext=ticktext
+            ),
+            legend=dict(title='Kategorie', bgcolor='rgba(255,255,255,0.7)')
+        )
 
-    return fig
+    return export_fig, import_fig, trade_fig
 
 # Callback-Registrierung
 def register_callbacks(app):
     app.callback(
-        Output('handel_comparison_graph', 'figure'),
+        [Output('export_comparison_graph', 'figure'),
+         Output('import_comparison_graph', 'figure'),
+         Output('trade_comparison_graph', 'figure')],
         Input('land_dropdown', 'value')
     )(update_graph)
