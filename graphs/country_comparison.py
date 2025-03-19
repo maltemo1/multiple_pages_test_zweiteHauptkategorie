@@ -129,21 +129,3 @@ def update_import_graph(selected_countries):
 )
 def update_trade_volume_graph(selected_countries):
     return create_graph(selected_countries, 'handelsvolumen_wert', 'Gesamthandelsvolumen', '#2ca02c')
-
-# Callback-Registrierung
-def register_callbacks(app):
-    app.callback(
-        Output('export_graph', 'figure'),
-        Input('land_dropdown', 'value')
-    )(update_export_graph)
-
-    app.callback(
-        Output('import_graph', 'figure'),
-        Input('land_dropdown', 'value')
-    )(update_import_graph)
-
-    app.callback(
-        Output('trade_volume_graph', 'figure'),
-        Input('land_dropdown', 'value')
-    )(update_trade_volume_graph)
-
