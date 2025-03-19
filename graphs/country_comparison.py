@@ -36,27 +36,17 @@ def create_layout():
             style={'width': '60%'}
         ),
 
-        html.Div([
-            dcc.Graph(id='export_graph'),
-            dcc.Graph(id='import_graph'),
-            dcc.Graph(id='trade_graph')
-        ])
+        dcc.Graph(id='export_graph'),
+        dcc.Graph(id='import_graph'),
+        dcc.Graph(id='trade_volume_graph')
     ])
 
-# Callback für die Aktualisierung der Graphen
-@callback(
-    [Output('export_graph', 'figure'),
-     Output('import_graph', 'figure'),
-     Output('trade_graph', 'figure')],
-    Input('land_dropdown', 'value')
-)
-def update_graph(selected_countries):
+# Funktion zur Erstellung von Graphen
+def create_graph(selected_countries, column, title, color):
     if not selected_countries:
-        return go.Figure(), go.Figure(), go.Figure()  # Leere Diagramme, falls keine Auswahl
+        return go.Figure()
 
-    export_fig = go.Figure()
-    import_fig = go.Figure()
-    trade_fig = go.Figure()
+    fig = go.Figure()
 
     for country in selected_countries:
         df_country = df_grouped[
@@ -65,107 +55,95 @@ def update_graph(selected_countries):
             (df_grouped['Jahr'] <= 2024)
         ]
 
-        # Export Graph
-        export_fig.add_trace(go.Scatter(
+        fig.add_trace(go.Scatter(
             x=df_country['Jahr'],
-            y=df_country['export_wert'],
+            y=df_country[column],
             mode='lines+markers',
-            name=f"Export ({country})",
-            line=dict(width=2),
-            hovertemplate=f'<b>Export ({country})</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
+            name=f"{title} ({country})",
+            line=dict(width=2, color=color),
+            hovertemplate=f'<b>{title} ({country})</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
         ))
 
-        # Import Graph
-        import_fig.add_trace(go.Scatter(
-            x=df_country['Jahr'],
-            y=df_country['import_wert'],
-            mode='lines+markers',
-            name=f"Import ({country})",
-            line=dict(width=2),
-            hovertemplate=f'<b>Import ({country})</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
-        ))
+    # Dynamische Skalierung der Y-Achse
+    max_value = df_grouped[df_grouped['Land'].isin(selected_countries)][column].max()
 
-        # Handelsvolumen Graph
-        trade_fig.add_trace(go.Scatter(
-            x=df_country['Jahr'],
-            y=df_country['handelsvolumen_wert'],
-            mode='lines+markers',
-            name=f"Handelsvolumen ({country})",
-            line=dict(width=2),
-            hovertemplate=f'<b>Handelsvolumen ({country})</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
-        ))
+    if max_value < 10e6:
+        step = 5e6
+    elif max_value < 50e6:
+        step = 10e6
+    elif max_value < 100e6:
+        step = 25e6
+    elif max_value < 250e6:
+        step = 50e6
+    elif max_value < 500e6:
+        step = 100e6
+    elif max_value < 1e9:
+        step = 250e6
+    elif max_value < 5e9:
+        step = 500e6
+    elif max_value < 10e9:
+        step = 1e9
+    elif max_value < 50e9:
+        step = 5e9
+    elif max_value < 100e9:
+        step = 10e9
+    else:
+        step = 25e9
 
-    # Maximale Werte für dynamische Skalierung
-    max_export = df_grouped[df_grouped['Land'].isin(selected_countries)]['export_wert'].max()
-    max_import = df_grouped[df_grouped['Land'].isin(selected_countries)]['import_wert'].max()
-    max_trade = df_grouped[df_grouped['Land'].isin(selected_countries)]['handelsvolumen_wert'].max()
+    rounded_max = math.ceil(max_value / step) * step
 
-    def get_dynamic_ticks(max_value):
-        if max_value < 10e6:
-            step = 5e6
-        elif max_value < 50e6:
-            step = 10e6
-        elif max_value < 100e6:
-            step = 25e6
-        elif max_value < 250e6:
-            step = 50e6
-        elif max_value < 500e6:
-            step = 100e6
-        elif max_value < 1e9:
-            step = 250e6
-        elif max_value < 5e9:
-            step = 500e6
-        elif max_value < 10e9:
-            step = 1e9
-        elif max_value < 50e9:
-            step = 5e9
-        elif max_value < 100e9:
-            step = 10e9
-        else:
-            step = 25e9
+    tickvals = np.arange(0, rounded_max + step, step)
+    ticktext = [formatter(val) for val in tickvals]
 
-        rounded_max = math.ceil(max_value / step) * step
-        tickvals = np.arange(0, rounded_max + step, step)
-        ticktext = [formatter(val) for val in tickvals]
-        return tickvals, ticktext
-
-    # Dynamische Y-Achsen für jeden Graphen
-    export_ticks, export_ticktext = get_dynamic_ticks(max_export)
-    import_ticks, import_ticktext = get_dynamic_ticks(max_import)
-    trade_ticks, trade_ticktext = get_dynamic_ticks(max_trade)
-
-    # Layout-Updates für die drei Graphen
-    export_fig.update_layout(
-        title='Exporte (2008-2024)',
+    fig.update_layout(
+        title=title,
         xaxis_title='Jahr',
         yaxis_title='Wert in €',
-        yaxis=dict(tickvals=export_ticks, ticktext=export_ticktext),
-        legend=dict(title='Länder', bgcolor='rgba(255,255,255,0.7)')
+        yaxis=dict(
+            tickvals=tickvals,
+            ticktext=ticktext
+        ),
+        legend=dict(title='Kategorie', bgcolor='rgba(255,255,255,0.7)')
     )
 
-    import_fig.update_layout(
-        title='Importe (2008-2024)',
-        xaxis_title='Jahr',
-        yaxis_title='Wert in €',
-        yaxis=dict(tickvals=import_ticks, ticktext=import_ticktext),
-        legend=dict(title='Länder', bgcolor='rgba(255,255,255,0.7)')
-    )
+    return fig
 
-    trade_fig.update_layout(
-        title='Handelsvolumen (2008-2024)',
-        xaxis_title='Jahr',
-        yaxis_title='Wert in €',
-        yaxis=dict(tickvals=trade_ticks, ticktext=trade_ticktext),
-        legend=dict(title='Länder', bgcolor='rgba(255,255,255,0.7)')
-    )
+# Callbacks für die drei separaten Graphen
+@callback(
+    Output('export_graph', 'figure'),
+    Input('land_dropdown', 'value')
+)
+def update_export_graph(selected_countries):
+    return create_graph(selected_countries, 'export_wert', 'Exportvolumen', '#1f77b4')
 
-    return export_fig, import_fig, trade_fig
+@callback(
+    Output('import_graph', 'figure'),
+    Input('land_dropdown', 'value')
+)
+def update_import_graph(selected_countries):
+    return create_graph(selected_countries, 'import_wert', 'Importvolumen', '#ff7f0e')
+
+@callback(
+    Output('trade_volume_graph', 'figure'),
+    Input('land_dropdown', 'value')
+)
+def update_trade_volume_graph(selected_countries):
+    return create_graph(selected_countries, 'handelsvolumen_wert', 'Gesamthandelsvolumen', '#2ca02c')
 
 # Callback-Registrierung
 def register_callbacks(app):
     app.callback(
-        [Output('export_graph', 'figure'),
-         Output('import_graph', 'figure'),
-         Output('trade_graph', 'figure')],
+        Output('export_graph', 'figure'),
         Input('land_dropdown', 'value')
-    )(update_graph)
+    )(update_export_graph)
+
+    app.callback(
+        Output('import_graph', 'figure'),
+        Input('land_dropdown', 'value')
+    )(update_import_graph)
+
+    app.callback(
+        Output('trade_volume_graph', 'figure'),
+        Input('land_dropdown', 'value')
+    )(update_trade_volume_graph)
+
