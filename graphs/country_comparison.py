@@ -30,7 +30,7 @@ def create_layout():
         dcc.Dropdown(
             id='land_dropdown',
             options=[{'label': land, 'value': land} for land in länder_options],
-            value=['Islamische Republik Iran'],  # Standardwert
+            value=['Islamische Republik Iran', "Irak", "Katar"],  # Standardwert
             multi=True,  # Mehrfachauswahl aktivieren
             clearable=False,
             style={'width': '60%'}
