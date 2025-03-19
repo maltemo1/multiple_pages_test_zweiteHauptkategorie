@@ -36,100 +36,91 @@ def create_layout():
             style={'width': '60%'}
         ),
 
-        dcc.Graph(id='export_graph'),
-        dcc.Graph(id='import_graph'),
-        dcc.Graph(id='trade_volume_graph'),
+        dcc.Graph(id='handel_comparison_graph'),
     ])
 
-# Callback für die Aktualisierung der Graphen
+# Callback für die Aktualisierung des Graphen
 @callback(
-    Output('export_graph', 'figure'),
-    Output('import_graph', 'figure'),
-    Output('trade_volume_graph', 'figure'),
+    Output('handel_comparison_graph', 'figure'),
     Input('land_dropdown', 'value')
 )
-def update_graphs(selected_countries):
+def update_graph(selected_countries):
     if not selected_countries:
-        return go.Figure(), go.Figure(), go.Figure()  # Leere Diagramme, falls keine Auswahl
+        return go.Figure()  # Leeres Diagramm, falls keine Auswahl
 
-    figures = []
-    categories = [
-        ('export_wert', 'Exportvolumen', '#1f77b4'),
-        ('import_wert', 'Importvolumen', '#ff7f0e'),
-        ('handelsvolumen_wert', 'Gesamthandelsvolumen', '#2ca02c')
-    ]
+    fig = go.Figure()
 
-    for col, name, color in categories:
-        fig = go.Figure()
+    for country in selected_countries:
+        df_country = df_grouped[
+            (df_grouped['Land'] == country) &
+            (df_grouped['Jahr'] >= 2008) &
+            (df_grouped['Jahr'] <= 2024)
+        ]
 
-        for country in selected_countries:
-            df_country = df_grouped[
-                (df_grouped['Land'] == country) &
-                (df_grouped['Jahr'] >= 2008) &
-                (df_grouped['Jahr'] <= 2024)
-            ]
-
+        for col, name, color in zip(
+            ['export_wert', 'import_wert', 'handelsvolumen_wert'],
+            ['Exportvolumen', 'Importvolumen', 'Gesamthandelsvolumen'],
+            ['#1f77b4', '#ff7f0e', '#2ca02c']
+        ):
             fig.add_trace(go.Scatter(
                 x=df_country['Jahr'],
                 y=df_country[col],
                 mode='lines+markers',
                 name=f"{name} ({country})",
-                line=dict(width=2, color=color),
+                line=dict(width=2),
                 hovertemplate=f'<b>{name} ({country})</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
             ))
 
-        # Maximale Werte bestimmen
-        max_value = df_grouped[df_grouped['Land'].isin(selected_countries)][col].max()
+    # Maximale Werte bestimmen
+    max_value = df_grouped[df_grouped['Land'].isin(selected_countries)][
+        ['export_wert', 'import_wert', 'handelsvolumen_wert']
+    ].values.max()
 
-        # Dynamische Skalierung der Y-Achse
-        if max_value < 10e6:
-            step = 5e6
-        elif max_value < 50e6:
-            step = 10e6
-        elif max_value < 100e6:
-            step = 25e6
-        elif max_value < 250e6:
-            step = 50e6
-        elif max_value < 500e6:
-            step = 100e6
-        elif max_value < 1e9:
-            step = 250e6
-        elif max_value < 5e9:
-            step = 500e6
-        elif max_value < 10e9:
-            step = 1e9
-        elif max_value < 50e9:
-            step = 5e9
-        elif max_value < 100e9:
-            step = 10e9
-        else:
-            step = 25e9
+    # Dynamische Skalierung der Y-Achse
+    if max_value < 10e6:
+        step = 5e6
+    elif max_value < 50e6:
+        step = 10e6
+    elif max_value < 100e6:
+        step = 25e6
+    elif max_value < 250e6:
+        step = 50e6
+    elif max_value < 500e6:
+        step = 100e6
+    elif max_value < 1e9:
+        step = 250e6
+    elif max_value < 5e9:
+        step = 500e6
+    elif max_value < 10e9:
+        step = 1e9
+    elif max_value < 50e9:
+        step = 5e9
+    elif max_value < 100e9:
+        step = 10e9
+    else:
+        step = 25e9
 
-        rounded_max = math.ceil(max_value / step) * step
+    rounded_max = math.ceil(max_value / step) * step
 
-        tickvals = np.arange(0, rounded_max + step, step)
-        ticktext = [formatter(val) for val in tickvals]
+    tickvals = np.arange(0, rounded_max + step, step)
+    ticktext = [formatter(val) for val in tickvals]
 
-        fig.update_layout(
-            title=f'{name} mit Deutschland (2008-2024)',
-            xaxis_title='Jahr',
-            yaxis_title='Wert in €',
-            yaxis=dict(
-                tickvals=tickvals,
-                ticktext=ticktext
-            ),
-            legend=dict(title='Kategorie', bgcolor='rgba(255,255,255,0.7)')
-        )
+    fig.update_layout(
+        title=f'Handelsverläufe mit Deutschland (2008-2024)',
+        xaxis_title='Jahr',
+        yaxis_title='Wert in €',
+        yaxis=dict(
+            tickvals=tickvals,
+            ticktext=ticktext
+        ),
+        legend=dict(title='Kategorie', bgcolor='rgba(255,255,255,0.7)')
+    )
 
-        figures.append(fig)
-
-    return figures[0], figures[1], figures[2]
+    return fig
 
 # Callback-Registrierung
 def register_callbacks(app):
     app.callback(
-        Output('export_graph', 'figure'),
-        Output('import_graph', 'figure'),
-        Output('trade_volume_graph', 'figure'),
+        Output('handel_comparison_graph', 'figure'),
         Input('land_dropdown', 'value')
-    )(update_graphs)
+    )(update_graph)
