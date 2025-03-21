@@ -5,12 +5,10 @@ import plotly.graph_objects as go
 import math
 import os
 
-# ✅ Dynamically find the correct path for the dataset
-base_path = os.path.dirname(os.path.abspath(__file__))
-data_path = os.path.join(base_path, "data", "df_grouped.csv")
 
-# ✅ Load the dataset
-df_grouped = pd.read_csv(data_path)
+
+# Daten laden
+df_grouped = pd.read_csv('data/df_grouped.csv')
 
 # ✅ Unique country options sorted alphabetically
 länder_options = sorted(df_grouped['Land'].unique())
