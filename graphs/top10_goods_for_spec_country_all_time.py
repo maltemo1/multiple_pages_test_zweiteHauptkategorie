@@ -3,7 +3,6 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
-import math
 import os
 
 # Sicherstellen, dass der richtige Dateipfad verwendet wird
@@ -13,7 +12,7 @@ top10_goods_spec_country = pd.read_csv(csv_path)
 # Einzigartige Länder alphabetisch sortieren
 länder_options = sorted(top10_goods_spec_country['Land'].unique())
 
-# Formatierungsfunktion für Achsenbeschriftung
+# Funktion zum Formatieren der x-Achse (Euro-Werte)
 def formatter(value):
     if value >= 1e9:
         return f'{value / 1e9:.1f} Mrd'
@@ -24,56 +23,57 @@ def formatter(value):
     else:
         return f'{int(value)}'
 
-# Berechnung der Tick-Schritte für Achsen
+# Funktion zur Berechnung der Schrittweite der Achse
 def calculate_tick_step(max_value):
     if max_value < 5e6:
-        return 1e6
+        step = 1e6
     elif max_value < 10e6:
-        return 2e6
+        step = 2e6
     elif max_value < 50e6:
-        return 5e6
+        step = 5e6
     elif max_value < 100e6:
-        return 10e6
+        step = 10e6
     elif max_value < 250e6:
-        return 20e6
+        step = 20e6
     elif max_value < 500e6:
-        return 50e6
+        step = 50e6
     elif max_value < 1e9:
-        return 100e6
+        step = 100e6
     elif max_value < 5e9:
-        return 200e6
+        step = 200e6
     elif max_value < 10e9:
-        return 500e6
+        step = 500e6
     elif max_value < 50e9:
-        return 5e9
+        step = 5e9
     elif max_value < 100e9:
-        return 10e9
+        step = 10e9
     elif max_value < 250e9:
-        return 20e9
+        step = 20e9
     else:
-        return 50e9
+        step = 50e9
+    return step
 
 # Layout-Funktion für das Dash-Modul
 def create_layout():
     return html.Div([
         html.H1("Top 10 Handelswaren zwischen Deutschland und einem ausgewählten Land (2008-2024)"),
         dcc.Dropdown(
-            id='land_dropdown',
+            id='land_dropdown_top10_goods',
             options=[{'label': land, 'value': land} for land in länder_options],
             value='Islamische Republik Iran',
             clearable=False,
             style={'width': '50%'}
         ),
-        dcc.Graph(id='export_graph'),
-        dcc.Graph(id='import_graph'),
+        dcc.Graph(id='export_graph_top10_goods'),
+        dcc.Graph(id='import_graph_top10_goods'),
     ])
 
-# Callback-Funktion für die Graphen-Updates
+# Callback-Funktion registrieren
 def register_callbacks(app):
     @app.callback(
-        [Output('export_graph', 'figure'),
-         Output('import_graph', 'figure')],
-        Input('land_dropdown', 'value')
+        [Output('export_graph_top10_goods', 'figure'),
+         Output('import_graph_top10_goods', 'figure')],
+        Input('land_dropdown_top10_goods', 'value')
     )
     def update_graphs(selected_country):
         filtered_df = top10_goods_spec_country[top10_goods_spec_country['Land'] == selected_country]
@@ -84,13 +84,13 @@ def register_callbacks(app):
         top_10_exports = aggregated_country_df.sort_values(by='Ausfuhr: Wert', ascending=False).head(10)
         max_export = top_10_exports['Ausfuhr: Wert'].max()
         export_step = calculate_tick_step(max_export)
-        rounded_export_max = math.ceil(max_export / export_step) * export_step
+        rounded_export_max = np.ceil(max_export / export_step) * export_step
         export_tick_vals = np.arange(0, rounded_export_max + 1, export_step)
 
         top_10_imports = aggregated_country_df.sort_values(by='Einfuhr: Wert', ascending=False).head(10)
         max_import = top_10_imports['Einfuhr: Wert'].max()
         import_step = calculate_tick_step(max_import)
-        rounded_import_max = math.ceil(max_import / import_step) * import_step
+        rounded_import_max = np.ceil(max_import / import_step) * import_step
         import_tick_vals = np.arange(0, rounded_import_max + 1, import_step)
 
         # Export-Plot
