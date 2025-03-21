@@ -7,7 +7,7 @@ import math
 import os
 
 # Load data (Ensure the correct path!)
-df_grouped = pd.read_csv('data/top10_goods_spec_country.csv')
+top10_goods_spec_country = pd.read_csv('data/top10_goods_spec_country.csv')
 
 # Einzigartige Länder alphabetisch sortieren
 länder_options = sorted(top10_goods_spec_country['Land'].unique())
