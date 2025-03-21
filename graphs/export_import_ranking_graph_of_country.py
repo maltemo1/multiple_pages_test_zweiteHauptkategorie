@@ -35,9 +35,14 @@ def register_callbacks(app):
                                 (df_grouped['Jahr'] >= 2008) &
                                 (df_grouped['Jahr'] <= 2024)]
 
-        df_country['export_ranking'] = df_country['export_ranking'].astype(int)
-        df_country['import_ranking'] = df_country['import_ranking'].astype(int)
-        df_country['handelsvolumen_ranking'] = df_country['handelsvolumen_ranking'].astype(int)
+        #df_country['export_ranking'] = df_country['export_ranking'].astype(int)
+        #df_country['import_ranking'] = df_country['import_ranking'].astype(int)
+        #df_country['handelsvolumen_ranking'] = df_country['handelsvolumen_ranking'].astype(int)
+
+        df_country.loc[:, 'export_ranking'] = df_country['export_ranking'].astype(int)
+        df_country.loc[:, 'import_ranking'] = df_country['import_ranking'].astype(int)
+        df_country.loc[:, 'handelsvolumen_ranking'] = df_country['handelsvolumen_ranking'].astype(int)
+
 
         fig = go.Figure()
 
