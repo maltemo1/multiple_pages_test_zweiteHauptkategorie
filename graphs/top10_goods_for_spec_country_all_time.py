@@ -3,8 +3,8 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
-import os
 import math
+import os
 
 # Sicherstellen, dass der richtige Dateipfad verwendet wird
 csv_path = os.path.join(os.path.dirname(__file__), '../data/top10_goods_spec_country.csv')
@@ -13,6 +13,7 @@ top10_goods_spec_country = pd.read_csv(csv_path)
 # Einzigartige Länder alphabetisch sortieren
 länder_options = sorted(top10_goods_spec_country['Land'].unique())
 
+# Formatierungsfunktion für Achsenbeschriftung
 def formatter(value):
     if value >= 1e9:
         return f'{value / 1e9:.1f} Mrd'
@@ -23,40 +24,39 @@ def formatter(value):
     else:
         return f'{int(value)}'
 
+# Berechnung der Tick-Schritte für Achsen
 def calculate_tick_step(max_value):
     if max_value < 5e6:
-        step = 1e6
+        return 1e6
     elif max_value < 10e6:
-        step = 2e6
+        return 2e6
     elif max_value < 50e6:
-        step = 5e6
+        return 5e6
     elif max_value < 100e6:
-        step = 10e6
+        return 10e6
     elif max_value < 250e6:
-        step = 20e6
+        return 20e6
     elif max_value < 500e6:
-        step = 50e6
+        return 50e6
     elif max_value < 1e9:
-        step = 100e6
+        return 100e6
     elif max_value < 5e9:
-        step = 200e6
+        return 200e6
     elif max_value < 10e9:
-        step = 500e6
+        return 500e6
     elif max_value < 50e9:
-        step = 5e9
+        return 5e9
     elif max_value < 100e9:
-        step = 10e9
+        return 10e9
     elif max_value < 250e9:
-        step = 20e9
+        return 20e9
     else:
-        step = 50e9
-    return step
+        return 50e9
 
 # Layout-Funktion für das Dash-Modul
 def create_layout():
     return html.Div([
         html.H1("Top 10 Handelswaren zwischen Deutschland und einem ausgewählten Land (2008-2024)"),
-
         dcc.Dropdown(
             id='land_dropdown',
             options=[{'label': land, 'value': land} for land in länder_options],
@@ -64,12 +64,11 @@ def create_layout():
             clearable=False,
             style={'width': '50%'}
         ),
-
         dcc.Graph(id='export_graph'),
         dcc.Graph(id='import_graph'),
     ])
 
-# Callback-Funktion registrieren
+# Callback-Funktion für die Graphen-Updates
 def register_callbacks(app):
     @app.callback(
         [Output('export_graph', 'figure'),
@@ -94,6 +93,7 @@ def register_callbacks(app):
         rounded_import_max = math.ceil(max_import / import_step) * import_step
         import_tick_vals = np.arange(0, rounded_import_max + 1, import_step)
 
+        # Export-Plot
         export_fig = go.Figure()
         export_fig.add_trace(go.Bar(
             x=top_10_exports['Ausfuhr: Wert'],
@@ -109,6 +109,7 @@ def register_callbacks(app):
             xaxis=dict(tickmode='array', tickvals=export_tick_vals, ticktext=[formatter(val) for val in export_tick_vals]),
         )
 
+        # Import-Plot
         import_fig = go.Figure()
         import_fig.add_trace(go.Bar(
             x=top_10_imports['Einfuhr: Wert'],
