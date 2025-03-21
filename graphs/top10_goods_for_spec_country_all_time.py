@@ -3,11 +3,12 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
-import math
 import os
+import math
 
-# Load data (Ensure the correct path!)
-top10_goods_spec_country = pd.read_csv('data/top10_goods_spec_country.csv')
+# Sicherstellen, dass der richtige Dateipfad verwendet wird
+csv_path = os.path.join(os.path.dirname(__file__), '../data/top10_goods_spec_country.csv')
+top10_goods_spec_country = pd.read_csv(csv_path)
 
 # Einzigartige Länder alphabetisch sortieren
 länder_options = sorted(top10_goods_spec_country['Land'].unique())
@@ -51,10 +52,11 @@ def calculate_tick_step(max_value):
         step = 50e9
     return step
 
-# Layout-Funktion für das Dashboard
+# Layout-Funktion für das Dash-Modul
 def create_layout():
     return html.Div([
         html.H1("Top 10 Handelswaren zwischen Deutschland und einem ausgewählten Land (2008-2024)"),
+
         dcc.Dropdown(
             id='land_dropdown',
             options=[{'label': land, 'value': land} for land in länder_options],
@@ -62,11 +64,12 @@ def create_layout():
             clearable=False,
             style={'width': '50%'}
         ),
+
         dcc.Graph(id='export_graph'),
         dcc.Graph(id='import_graph'),
     ])
 
-# Callback-Logik zur Aktualisierung der Diagramme
+# Callback-Funktion registrieren
 def register_callbacks(app):
     @app.callback(
         [Output('export_graph', 'figure'),
