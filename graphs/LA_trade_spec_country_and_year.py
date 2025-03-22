@@ -7,12 +7,16 @@ import plotly.graph_objects as go
 import numpy as np
 import math
 
-# Daten laden
-data_dir = os.path.join(os.path.dirname(__file__), '../data')
-df = pd.read_csv(os.path.join(data_dir, 'trade_spec_country_and_year.csv'))
-df_grouped = pd.read_csv(os.path.join(data_dir, 'df_grouped.csv'))
+# Correct file paths for Render deployment
+base_path = os.path.dirname(__file__)
+df_path = os.path.join(base_path, "..", "data", "trade_spec_country_and_year.csv")
+df_grouped_path = os.path.join(base_path, "..", "data", "df_grouped.csv")
 
-# Funktion zur Formatierung der Y-Achse
+# Read CSV files
+df = pd.read_csv(df_path)
+df_grouped = pd.read_csv(df_grouped_path)
+
+# Function to format axis labels
 def formatter(value):
     if value >= 1e9:
         return f'{value / 1e9:.2f} Mrd'
@@ -23,7 +27,7 @@ def formatter(value):
     else:
         return str(value)
 
-# Layout-Funktion
+# Function to create layout
 def create_layout():
     return html.Div([
         html.H1("Monatlicher Handelsverlauf Deutschlands mit ausgewähltem Land"),
@@ -49,7 +53,7 @@ def create_layout():
         dcc.Graph(id='monatlicher_handel_graph'),
     ])
 
-# Callback-Funktion registrieren
+# Function to register callbacks
 def register_callbacks(app):
     @app.callback(
         [Output('monatlicher_handel_graph', 'figure'),
@@ -61,6 +65,7 @@ def register_callbacks(app):
         df_country_monthly = df[(df['Land'] == country) & (df['Jahr'] == year_selected)]
 
         fig = go.Figure()
+
         for col, name, color in zip(
             ['export_wert', 'import_wert', 'handelsvolumen_wert'],
             ['Exportvolumen', 'Importvolumen', 'Gesamthandelsvolumen'],
@@ -76,7 +81,31 @@ def register_callbacks(app):
             ))
 
         max_value = df_country_monthly[['export_wert', 'import_wert', 'handelsvolumen_wert']].values.max()
-        step = next(s for s in [1e6, 5e6, 10e6, 25e6, 50e6, 100e6, 250e6, 500e6, 1e9, 2e9, 10e9, 25e9] if max_value < s * 5)
+
+        if max_value < 5e6:
+            step = 1e6
+        elif max_value < 10e6:
+            step = 5e6
+        elif max_value < 50e6:
+            step = 10e6
+        elif max_value < 100e6:
+            step = 25e6
+        elif max_value < 250e6:
+            step = 50e6
+        elif max_value < 500e6:
+            step = 100e6
+        elif max_value < 1e9:
+            step = 250e6
+        elif max_value < 5e9:
+            step = 500e6
+        elif max_value < 10e9:
+            step = 1e9
+        elif max_value < 50e9:
+            step = 2e9
+        elif max_value < 100e9:
+            step = 10e9
+        else:
+            step = 25e9
 
         rounded_max = math.ceil(max_value / step) * step
         tickvals = np.arange(0, rounded_max + 1, step)
