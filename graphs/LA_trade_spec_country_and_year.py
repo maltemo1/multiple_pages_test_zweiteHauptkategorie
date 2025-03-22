@@ -1,22 +1,15 @@
-import os
-import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objects as go
-import numpy as np
 import math
+import numpy as np
 
-# Correct file paths for Render deployment
-base_path = os.path.dirname(__file__)
-df_path = os.path.join(base_path, "..", "data", "trade_spec_country_and_year.csv")
-df_grouped_path = os.path.join(base_path, "..", "data", "df_grouped.csv")
+# CSV-Dateien einlesen (stellen Sie sicher, dass die Dateien in Render vorhanden sind!)
+df = pd.read_csv('data/trade_spec_country_and_year.csv')
+df_grouped = pd.read_csv('data/df_grouped.csv')
 
-# Read CSV files
-df = pd.read_csv(df_path)
-df_grouped = pd.read_csv(df_grouped_path)
-
-# Function to format axis labels
+# Funktion zur Formatierung der Y-Achse
 def formatter(value):
     if value >= 1e9:
         return f'{value / 1e9:.2f} Mrd'
@@ -27,7 +20,7 @@ def formatter(value):
     else:
         return str(value)
 
-# Function to create layout
+# Layout-Funktion für die Integration ins Haupt-Dashboard
 def create_layout():
     return html.Div([
         html.H1("Monatlicher Handelsverlauf Deutschlands mit ausgewähltem Land"),
@@ -53,7 +46,7 @@ def create_layout():
         dcc.Graph(id='monatlicher_handel_graph'),
     ])
 
-# Function to register callbacks
+# Callback-Funktion für Dropdown-Interaktion
 def register_callbacks(app):
     @app.callback(
         [Output('monatlicher_handel_graph', 'figure'),
