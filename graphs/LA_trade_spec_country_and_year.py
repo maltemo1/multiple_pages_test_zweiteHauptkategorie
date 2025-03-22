@@ -21,8 +21,8 @@ import os
 
 
 # CSV-Dateien einlesen
-df = pd.read_csv('/content/drive/MyDrive/DIIHK/Data/Render_Data_Sets/trade_spec_country_and_year.csv')
-df_grouped = pd.read_csv('/content/drive/MyDrive/DIIHK/Data/Render_Data_Sets/df_grouped.csv')
+df = pd.read_csv('data/trade_spec_country_and_year.csv')
+df_grouped = pd.read_csv('data/Render_Data_Sets/df_grouped.csv')
 
 # Funktion zur Formatierung der Y-Achse
 def formatter(value):
