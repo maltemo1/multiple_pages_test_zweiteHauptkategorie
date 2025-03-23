@@ -7,9 +7,8 @@ import os
 import numpy as np
 import math
 
-# Sicherstellen, dass der richtige Dateipfad verwendet wird
-data_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'top10_goods_spec_country_and_year.csv')
-df = pd.read_csv(data_path)
+# Daten laden
+df = pd.read_csv('data/top10_goods_spec_country_and_year.csv')
 
 # Werte umwandeln (von Tausendern in Originalwerte)
 df[['Ausfuhr: Wert', 'Einfuhr: Wert']] = (df[['Ausfuhr: Wert', 'Einfuhr: Wert']] * 1000).astype(int)
