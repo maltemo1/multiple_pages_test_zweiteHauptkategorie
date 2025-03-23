@@ -33,8 +33,7 @@ def create_nav_structure():
                 "Deutschlands Top 10 Waren im Handel": "top10_goods_for_spec_country_all_time"
             },
             "Überblick nach bestimmtem Jahr": {
-                "Handelsbilanz & Ranking": "#", #"LA_trade_spec_country_and_year",
-                "Monatlicher Handelsverlauf": "#",
+                "Monatlicher Handelsverlauf, Handelsbilanz & Ranking": "#", #"LA_trade_spec_country_and_year",
                 "Top 10 Export- und Importwaren": "#",
                 "Top 4 Waren nach Differenz zum Vorjahr": "#",
                 "Top 4 Waren nach Wachstum zum Vorjahr": "#"
