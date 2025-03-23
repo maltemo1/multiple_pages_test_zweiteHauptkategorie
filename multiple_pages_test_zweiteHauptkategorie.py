@@ -30,7 +30,7 @@ def create_nav_structure():
                 "Vergleich mit anderen Ländern": "country_comparison",
                 "Export- und Importwachstumsrate": "export_import_growth_countries",
                 "Platzierung im Export- und Importranking Deutschlands": "export_import_ranking_graph_of_country",
-                "Deutschlands Top 10 Waren im Handel": "top10_goods_for_spec_country_all_time"
+                "Deutschlands Top 10 Waren im Handel": "LA_top10_goods_for_spec_country_and_year"
             },
             "Überblick nach bestimmtem Jahr": {
                 "Monatlicher Handelsverlauf, Handelsbilanz & Ranking": "#", #"LA_trade_spec_country_and_year",
@@ -139,7 +139,7 @@ graph_modules = [
     "monthly_trade", "top_10_trade_partners", "top_diff_countries", 
     "top_growth_countries", "top_diff_goods", "top_growth_goods", "top_10_trade_goods",
     "LA_gesamt_export_import_volumen", "country_comparison", "export_import_growth_countries", "export_import_ranking_graph_of_country", "top10_goods_for_spec_country_all_time",
-    "top10_goods_spec_country_and_year" #, "LA_trade_spec_country_and_year"
+    "LA_top10_goods_for_spec_country_and_year" #, "LA_trade_spec_country_and_year"
 ]
 
 for module_name in graph_modules:
