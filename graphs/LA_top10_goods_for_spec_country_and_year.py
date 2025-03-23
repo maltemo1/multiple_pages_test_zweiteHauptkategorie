@@ -21,7 +21,7 @@ import os
 
 
 # Daten laden
-df = pd.read_csv("/content/drive/MyDrive/DIIHK/Data/Render_Data_Sets/top10_goods_spec_country_and_year.csv")
+df = pd.read_csv("data/top10_goods_spec_country_and_year.csv")
 
 # Werte mal 1000 multiplizieren, um von Tausender-Werte zu den Originalwerten zu gelangen
 df[['Ausfuhr: Wert', 'Einfuhr: Wert']] = (df[['Ausfuhr: Wert', 'Einfuhr: Wert']] * 1000).astype(int)
