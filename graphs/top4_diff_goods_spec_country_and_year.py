@@ -8,6 +8,9 @@ import math
 # CSV-Datei einlesen
 df = pd.read_csv('data/top10_goods_spec_country_and_year.csv')
 
+# Werte von Tausendern auf Originalwerte umrechnen
+df[['Ausfuhr: Wert', 'Einfuhr: Wert']] = (df[['Ausfuhr: Wert', 'Einfuhr: Wert']] * 1000).astype(int)
+
 # Funktion zum Formatieren der x-Achse
 def formatter(value):
     if abs(value) >= 1e9:
@@ -22,7 +25,7 @@ def formatter(value):
 # Layout-Funktion für das Dash-Layout
 def create_layout():
     return html.Div([
-        html.H1("Handelsdifferenzen nach Warengruppe für ein ausgewähltes Land und Jahr"),
+        html.H1("Handelsdifferenzen nach Warengruppe für ein Land und Jahr"),
         dcc.Dropdown(
             id='country_dropdown_goods',
             options=[{'label': country, 'value': country} for country in sorted(df['Land'].unique())],
@@ -50,9 +53,15 @@ def register_callbacks(app):
          Input('year_dropdown_goods', 'value')]
     )
     def update_graphs(selected_country, selected_year):
+        # Daten für das ausgewählte Jahr und das Vorjahr filtern
         df_current = df[(df['Land'] == selected_country) & (df['Jahr'] == selected_year)]
         df_previous = df[(df['Land'] == selected_country) & (df['Jahr'] == selected_year - 1)]
         
+        # Gruppierung und Aggregation
+        df_current = df_current.groupby('Label', as_index=False).agg({'Ausfuhr: Wert': 'sum', 'Einfuhr: Wert': 'sum'})
+        df_previous = df_previous.groupby('Label', as_index=False).agg({'Ausfuhr: Wert': 'sum', 'Einfuhr: Wert': 'sum'})
+
+        # Daten zusammenführen und Differenzen berechnen
         df_diff = pd.merge(df_current, df_previous, on="Label", suffixes=('_current', '_previous'), how='outer').fillna(0)
         df_diff['export_differenz'] = df_diff['Ausfuhr: Wert_current'] - df_diff['Ausfuhr: Wert_previous']
         df_diff['import_differenz'] = df_diff['Einfuhr: Wert_current'] - df_diff['Einfuhr: Wert_previous']
