@@ -30,7 +30,7 @@ def create_nav_structure():
                 "Vergleich mit anderen Ländern": "country_comparison",
                 "Export- und Importwachstumsrate": "export_import_growth_countries",
                 "Platzierung im Export- und Importranking Deutschlands": "export_import_ranking_graph_of_country",
-                "Deutschlands Top 10 Waren im Handel": "top10_goods_for_spec_country_all_time"
+                "Deutschlands Top 10 Waren im Handel": "#" #"top10_goods_for_spec_country_all_time"
             },
             "Überblick nach bestimmtem Jahr": {
                 "Handelsbilanz & Ranking": "LA_trade_spec_country_and_year",
