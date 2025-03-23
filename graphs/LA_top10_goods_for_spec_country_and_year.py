@@ -9,6 +9,9 @@ import os
 csv_path = os.path.join(os.path.dirname(__file__), '../data/top10_goods_spec_country_and_year.csv')
 df = pd.read_csv(csv_path)
 
+# Werte durch 1000 teilen und als Integer speichern, mit Rundung
+df[['Ausfuhr: Wert', 'Einfuhr: Wert']] = (df[['Ausfuhr: Wert', 'Einfuhr: Wert']] * 1000).astype(int)
+
 # Einzigartige Länder und Jahre alphabetisch bzw. numerisch sortieren
 länder_options = sorted(df['Land'].unique())
 jahre_options = sorted(df['Jahr'].unique())
