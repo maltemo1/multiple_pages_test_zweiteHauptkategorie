@@ -2,10 +2,11 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objects as go
-import numpy as np
+import os
 
 # CSV-Datei einlesen
-df = pd.read_csv('data/top10_goods_spec_country_and_year.csv')
+csv_path = os.path.join(os.path.dirname(__file__), '../data/top10_goods_spec_country_and_year.csv')
+df = pd.read_csv(csv_path)
 
 # Werte umwandeln (Tausender in Originalwerte)
 df[['Ausfuhr: Wert', 'Einfuhr: Wert']] = df[['Ausfuhr: Wert', 'Einfuhr: Wert']].fillna(0) * 1000
@@ -20,45 +21,35 @@ def formatter(value):
         return f'{value / 1e3:.0f} Tsd'
     return f'{int(value)}'
 
-# Schrittgröße für Achsenskalierung bestimmen
-def determine_step_size(max_value):
-    thresholds = [1e6, 5e6, 10e6, 50e6, 100e6, 500e6, 1e9, 5e9, 10e9, 50e9]
-    steps = [1e5, 5e5, 1e6, 5e6, 10e6, 50e6, 100e6, 500e6, 1e9, 5e9]
-    for threshold, step in zip(thresholds, steps):
-        if max_value < threshold:
-            return step
-    return 10e9
-
 # Layout der Seite
-def create_layout(app):
-    register_callbacks(app)  # Stellt sicher, dass Callbacks registriert werden
+def create_layout():
     return html.Div([
         html.H1("Top 4 Waren nach Differenz zum Vorjahr"),
         dcc.Dropdown(
-            id='country_dropdown',
+            id='land_dropdown_top10_goods_year',
             options=[{'label': country, 'value': country} for country in sorted(df['Land'].unique())],
             value='Islamische Republik Iran',
             clearable=False,
             style={'width': '50%'}
         ),
         dcc.Dropdown(
-            id='year_dropdown',
+            id='jahr_dropdown_top10_goods_year',
             options=[{'label': str(j), 'value': j} for j in sorted(df['Jahr'].unique())],
             value=2024,
             clearable=False,
             style={'width': '50%'}
         ),
-        dcc.Graph(id='export_diff_graph'),
-        dcc.Graph(id='import_diff_graph'),
+        dcc.Graph(id='export_graph_top10_goods_year'),
+        dcc.Graph(id='import_graph_top10_goods_year'),
     ])
 
 # Callback-Funktion registrieren
 def register_callbacks(app):
     @app.callback(
-        [Output('export_diff_graph', 'figure'),
-         Output('import_diff_graph', 'figure')],
-        [Input('country_dropdown', 'value'),
-         Input('year_dropdown', 'value')]
+        [Output('export_graph_top10_goods_year', 'figure'),
+         Output('import_graph_top10_goods_year', 'figure')],
+        [Input('land_dropdown_top10_goods_year', 'value'),
+         Input('jahr_dropdown_top10_goods_year', 'value')]
     )
     def update_graphs(selected_country, selected_year):
         df_current = df[(df['Land'] == selected_country) & (df['Jahr'] == selected_year)]
