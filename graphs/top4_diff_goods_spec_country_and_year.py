@@ -3,7 +3,6 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
-import math
 
 # CSV-Datei einlesen
 df = pd.read_csv('data/top10_goods_spec_country_and_year.csv')
@@ -31,7 +30,8 @@ def determine_step_size(max_value):
     return 10e9
 
 # Layout der Seite
-def create_layout():
+def create_layout(app):
+    register_callbacks(app)  # Callback-Registrierung sicherstellen
     return html.Div([
         html.H1("Top 4 Waren nach Differenz zum Vorjahr"),
         dcc.Dropdown(
@@ -74,9 +74,6 @@ def register_callbacks(app):
         df_diff['export_differenz'] = df_diff['Ausfuhr: Wert_current'] - df_diff['Ausfuhr: Wert_previous']
         df_diff['import_differenz'] = df_diff['Einfuhr: Wert_current'] - df_diff['Einfuhr: Wert_previous']
 
-        # Debugging: Print DataFrame to check values
-        print(df_diff)
-
         # Top & Bottom 4 für Export
         top_4_export_diff = df_diff.nlargest(4, 'export_differenz')
         bottom_4_export_diff = df_diff.nsmallest(4, 'export_differenz')
@@ -102,16 +99,14 @@ def register_callbacks(app):
             x=top_4_export_diff['export_differenz'],
             orientation='h',
             name='Top 4 Zuwächse',
-            marker_color='green',
-            hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
+            marker_color='green'
         ))
         export_fig.add_trace(go.Bar(
             y=bottom_4_export_diff['Label'],
             x=bottom_4_export_diff['export_differenz'],
             orientation='h',
             name='Top 4 Rückgänge',
-            marker_color='red',
-            hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
+            marker_color='red'
         ))
         export_fig.update_layout(
             title=f'Exportdifferenzen ({selected_country}, {selected_year} vs. {selected_year - 1})',
@@ -126,16 +121,14 @@ def register_callbacks(app):
             x=top_4_import_diff['import_differenz'],
             orientation='h',
             name='Top 4 Zuwächse',
-            marker_color='green',
-            hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
+            marker_color='green'
         ))
         import_fig.add_trace(go.Bar(
             y=bottom_4_import_diff['Label'],
             x=bottom_4_import_diff['import_differenz'],
             orientation='h',
             name='Top 4 Rückgänge',
-            marker_color='red',
-            hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
+            marker_color='red'
         ))
         import_fig.update_layout(
             title=f'Importdifferenzen ({selected_country}, {selected_year} vs. {selected_year - 1})',
