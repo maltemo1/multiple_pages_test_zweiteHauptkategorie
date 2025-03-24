@@ -121,7 +121,7 @@ def register_callbacks(app):
         ))
         import_fig.update_layout(
             title=f'Importdifferenzen für {year_selected}',
-            xaxis_title='Exportdifferenz (EUR)',
+            xaxis_title='Importdifferenz (EUR)',
             xaxis=dict(tickmode='array', tickvals=import_ticks, ticktext=[formatter(val, 0) for val in import_ticks]),
             yaxis_title='Land'
         )
@@ -146,7 +146,7 @@ def register_callbacks(app):
         ))
         handelsvolumen_fig.update_layout(
             title=f'Handelsvolumendifferenzen für {year_selected}',
-            xaxis_title='Exportdifferenz (EUR)',
+            xaxis_title='Handelsvolumendifferenz (EUR)',
             xaxis=dict(tickmode='array', tickvals=handelsvolumen_ticks, ticktext=[formatter(val, 0) for val in handelsvolumen_ticks]),
             yaxis_title='Land'
         )
