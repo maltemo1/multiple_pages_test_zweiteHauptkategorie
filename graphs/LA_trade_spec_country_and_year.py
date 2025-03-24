@@ -19,7 +19,7 @@ if df.empty or df_grouped.empty:
     raise ValueError("CSV-Dateien konnten nicht geladen werden oder sind leer.")
 
 # Werte mit 1000 multiplizieren, um die Originalwerte zu erhalten
-df[['export_wert', 'import_wert', 'handelsvolumen_wert']] = df[['export_wert', 'import_wert', 'handelsvolumen_wert']].fillna(0) * 1000
+#df[['export_wert', 'import_wert', 'handelsvolumen_wert']] = df[['export_wert', 'import_wert', 'handelsvolumen_wert']].fillna(0) * 1000
 
 # Funktion zur Bestimmung der optimalen Schrittgröße für die Y-Achse
 def determine_step_size(max_value):
@@ -126,7 +126,8 @@ def register_callbacks(app):
         if not df_selected.empty:
             status = df_selected['handelsbilanz_status'].values[0]
             handelsbilanz = df_selected['handelsbilanz'].values[0]
-            info_text = f"Handelsbilanzstatus: {status} ({formatter(handelsbilanz)})"
+            
+            info_text = f"Handelsbilanzstatus im ausgewählten Jahr: {status} ({formatter(handelsbilanz)})"
         else:
             info_text = "Keine Daten zur Handelsbilanz verfügbar."
 
