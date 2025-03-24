@@ -122,9 +122,12 @@ def register_callbacks(app):
             hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
         ))
         export_fig.update_layout(
-            title=f'Export-Differenzen ({selected_country}, {selected_year})',
+            title=f'Exportdifferenzen nach Warengruppe ({selected_country}, {selected_year} vs. {selected_year - 1})',
+            xaxis_title='Exportdifferenz (EUR)',
             xaxis=dict(tickvals=export_ticks, ticktext=[formatter(val) for val in export_ticks]),
-            legend_title="Kategorie"
+            yaxis_title='Warengruppe' #,
+            #legend_title="Kategorie"
+
         )
 
         # Import-Differenzen-Graph
@@ -146,9 +149,11 @@ def register_callbacks(app):
             hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
         ))
         import_fig.update_layout(
-            title=f'Import-Differenzen ({selected_country}, {selected_year})',
+            title=f'Importdifferenzen nach Warengruppe ({selected_country}, {selected_year} vs. {selected_year - 1})',
+            xaxis_title='Importdifferenz (EUR)',
             xaxis=dict(tickvals=import_ticks, ticktext=[formatter(val) for val in import_ticks]),
-            legend_title="Kategorie"
+            yaxis_title='Warengruppe' #,
+            #legend_title="Kategorie"
         )
 
         return export_fig, import_fig
