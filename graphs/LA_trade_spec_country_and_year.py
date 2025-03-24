@@ -127,7 +127,7 @@ def register_callbacks(app):
             status = df_selected['handelsbilanz_status'].values[0]
             handelsbilanz = df_selected['handelsbilanz'].values[0]
             
-            info_text = f"Handelsbilanzstatus im ausgewählten Jahr: {status} ({formatter(handelsbilanz)})"
+            info_text = f"Deutschlands Handelsbilanzstatus mit {selected_country} im ausgewählten Jahr: {status} ({handelsbilanz} €)"
         else:
             info_text = "Keine Daten zur Handelsbilanz verfügbar."
 
