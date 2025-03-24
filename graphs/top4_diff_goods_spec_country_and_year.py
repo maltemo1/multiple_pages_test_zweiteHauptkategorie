@@ -16,30 +16,30 @@ def create_layout():
     return html.Div([
         html.H1("Top 4 Waren nach Differenz zum Vorjahr"),
         dcc.Dropdown(
-            id='land_dropdown_top10_goods_year',
+            id='land_dropdown_top10_goods_year_123',
             options=[{'label': country, 'value': country} for country in sorted(df['Land'].unique())],
             value='Islamische Republik Iran',
             clearable=False,
             style={'width': '50%'}
         ),
         dcc.Dropdown(
-            id='jahr_dropdown_top10_goods_year',
+            id='jahr_dropdown_top10_goods_year_123',
             options=[{'label': str(j), 'value': j} for j in sorted(df['Jahr'].unique())],
             value=2024,
             clearable=False,
             style={'width': '50%'}
         ),
-        dcc.Graph(id='export_graph_top10_goods_year'),
-        dcc.Graph(id='import_graph_top10_goods_year'),
+        dcc.Graph(id='export_graph_top10_goods_year_123'),
+        dcc.Graph(id='import_graph_top10_goods_year_123'),
     ])
 
 # Callback-Funktion registrieren
 def register_callbacks(app):
     @app.callback(
-        [Output('export_graph_top10_goods_year', 'figure'),
-         Output('import_graph_top10_goods_year', 'figure')],
-        [Input('land_dropdown_top10_goods_year', 'value'),
-         Input('jahr_dropdown_top10_goods_year', 'value')]
+        [Output('export_graph_top10_goods_year_123', 'figure'),
+         Output('import_graph_top10_goods_year_123', 'figure')],
+        [Input('land_dropdown_top10_goods_year_123', 'value'),
+         Input('jahr_dropdown_top10_goods_year_123', 'value')]
     )
     def update_graphs(selected_country, selected_year):
         df_current = df[(df['Land'] == selected_country) & (df['Jahr'] == selected_year)]
