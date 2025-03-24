@@ -11,16 +11,6 @@ df = pd.read_csv(csv_path)
 # Werte umwandeln (Tausender in Originalwerte)
 df[['Ausfuhr: Wert', 'Einfuhr: Wert']] = df[['Ausfuhr: Wert', 'Einfuhr: Wert']].fillna(0) * 1000
 
-# Funktion zur Achsenskalierung
-def formatter(value):
-    if abs(value) >= 1e9:
-        return f'{value / 1e9:.2f} Mrd'
-    elif abs(value) >= 1e6:
-        return f'{value / 1e6:.1f} Mio'
-    elif abs(value) >= 1e3:
-        return f'{value / 1e3:.0f} Tsd'
-    return f'{int(value)}'
-
 # Layout der Seite
 def create_layout():
     return html.Div([
