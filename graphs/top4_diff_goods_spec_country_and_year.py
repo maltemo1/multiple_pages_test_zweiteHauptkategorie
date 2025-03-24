@@ -111,7 +111,7 @@ def register_callbacks(app):
             orientation='h', 
             marker_color='green', 
             name='Top 4 Zuwächse',
-            hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
+            hovertemplate='Zuwachs: %{x:,.0f} €<extra></extra>'
         ))
         export_fig.add_trace(go.Bar(
             y=bottom_4_export_diff['Label'],
@@ -119,7 +119,7 @@ def register_callbacks(app):
             orientation='h', 
             marker_color='red', 
             name='Top 4 Rückgänge',
-            hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
+            hovertemplate='Rückgang: %{x:,.0f} €<extra></extra>'
         ))
         export_fig.update_layout(
             title=f'Exportdifferenzen nach Warengruppe ({selected_country}, {selected_year} vs. {selected_year - 1})',
@@ -138,7 +138,7 @@ def register_callbacks(app):
             orientation='h', 
             marker_color='green', 
             name='Top 4 Zuwächse',
-            hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
+            hovertemplate='Zuwachs: %{x:,.0f} €<extra></extra>'
         ))
         import_fig.add_trace(go.Bar(
             y=bottom_4_import_diff['Label'],
@@ -146,7 +146,7 @@ def register_callbacks(app):
             orientation='h', 
             marker_color='red', 
             name='Top 4 Rückgänge',
-            hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
+            hovertemplate='Rückgang: %{x:,.0f} €<extra></extra>'
         ))
         import_fig.update_layout(
             title=f'Importdifferenzen nach Warengruppe ({selected_country}, {selected_year} vs. {selected_year - 1})',
