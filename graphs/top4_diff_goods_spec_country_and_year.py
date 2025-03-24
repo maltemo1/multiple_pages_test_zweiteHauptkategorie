@@ -118,7 +118,7 @@ def register_callbacks(app):
             x=bottom_4_export_diff['export_differenz'], 
             orientation='h', 
             marker_color='red', 
-            name='Bottom 4 Verluste',
+            name='Top 4 Rückgänge',
             hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
         ))
         export_fig.update_layout(
@@ -142,7 +142,7 @@ def register_callbacks(app):
             x=bottom_4_import_diff['import_differenz'], 
             orientation='h', 
             marker_color='red', 
-            name='Bottom 4 Verluste',
+            name='Top 4 Rückgänge',
             hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
         ))
         import_fig.update_layout(
