@@ -96,7 +96,9 @@ def register_callbacks(app):
         ))
         export_fig.update_layout(
             title=f'Exportdifferenzen für {year_selected}',
-            xaxis=dict(tickmode='array', tickvals=export_ticks, ticktext=[formatter(val, 0) for val in export_ticks])
+            xaxis_title='Exportdifferenz (EUR)',
+            xaxis=dict(tickmode='array', tickvals=export_ticks, ticktext=[formatter(val, 0) for val in export_ticks]),
+            yaxis_title='Land'
         )
 
         # Diagramm: Importdifferenzen
@@ -119,7 +121,9 @@ def register_callbacks(app):
         ))
         import_fig.update_layout(
             title=f'Importdifferenzen für {year_selected}',
-            xaxis=dict(tickmode='array', tickvals=import_ticks, ticktext=[formatter(val, 0) for val in import_ticks])
+            xaxis_title='Exportdifferenz (EUR)',
+            xaxis=dict(tickmode='array', tickvals=import_ticks, ticktext=[formatter(val, 0) for val in import_ticks]),
+            yaxis_title='Land'
         )
 
         # Diagramm: Handelsvolumendifferenzen
@@ -142,7 +146,9 @@ def register_callbacks(app):
         ))
         handelsvolumen_fig.update_layout(
             title=f'Handelsvolumendifferenzen für {year_selected}',
-            xaxis=dict(tickmode='array', tickvals=handelsvolumen_ticks, ticktext=[formatter(val, 0) for val in handelsvolumen_ticks])
+            xaxis_title='Exportdifferenz (EUR)',
+            xaxis=dict(tickmode='array', tickvals=handelsvolumen_ticks, ticktext=[formatter(val, 0) for val in handelsvolumen_ticks]),
+            yaxis_title='Land'
         )
 
         return export_fig, import_fig, handelsvolumen_fig
