@@ -35,29 +35,30 @@ def determine_step_size(max_value):
             return steps[i]
     return 10e9
 
-# Layout für die Integration ins Haupt-Dashboard
-layout = html.Div([
-    html.H1("Handelsdifferenzen nach Warengruppe für ein ausgewähltes Land und Jahr"),
+# Funktion zur Erstellung des Layouts
+def create_layout():
+    return html.Div([
+        html.H1("Handelsdifferenzen nach Warengruppe für ein ausgewähltes Land und Jahr"),
 
-    dcc.Dropdown(
-        id='top4_diff_goods_country_year_dropdown_country',
-        options=[{'label': country, 'value': country} for country in sorted(df['Land'].unique())],
-        value='Islamische Republik Iran',
-        clearable=False,
-        style={'width': '50%'}
-    ),
+        dcc.Dropdown(
+            id='top4_diff_goods_country_year_dropdown_country',
+            options=[{'label': country, 'value': country} for country in sorted(df['Land'].unique())],
+            value='Islamische Republik Iran',
+            clearable=False,
+            style={'width': '50%'}
+        ),
 
-    dcc.Dropdown(
-        id='top4_diff_goods_country_year_dropdown_year',
-        options=[{'label': str(j), 'value': j} for j in sorted(df['Jahr'].unique())],
-        value=2024,
-        clearable=False,
-        style={'width': '50%'}
-    ),
+        dcc.Dropdown(
+            id='top4_diff_goods_country_year_dropdown_year',
+            options=[{'label': str(j), 'value': j} for j in sorted(df['Jahr'].unique())],
+            value=2024,
+            clearable=False,
+            style={'width': '50%'}
+        ),
 
-    dcc.Graph(id='top4_diff_goods_country_year_export_graph'),
-    dcc.Graph(id='top4_diff_goods_country_year_import_graph'),
-])
+        dcc.Graph(id='top4_diff_goods_country_year_export_graph'),
+        dcc.Graph(id='top4_diff_goods_country_year_import_graph'),
+    ])
 
 # Callback für das Update der Graphen
 def register_callbacks(app):
