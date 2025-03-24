@@ -31,7 +31,7 @@ def determine_step_size(max_value):
 
 # Layout der Seite
 def create_layout(app):
-    register_callbacks(app)  # Callback-Registrierung sicherstellen
+    register_callbacks(app)  # Stellt sicher, dass Callbacks registriert werden
     return html.Div([
         html.H1("Top 4 Waren nach Differenz zum Vorjahr"),
         dcc.Dropdown(
@@ -63,9 +63,12 @@ def register_callbacks(app):
     def update_graphs(selected_country, selected_year):
         df_current = df[(df['Land'] == selected_country) & (df['Jahr'] == selected_year)]
         df_previous = df[(df['Land'] == selected_country) & (df['Jahr'] == selected_year - 1)]
-        
+
         if df_current.empty or df_previous.empty:
-            return go.Figure(), go.Figure()  # Return empty graphs if no data
+            return (
+                go.Figure(layout={"title": f"Keine Daten für {selected_year}"}),
+                go.Figure(layout={"title": f"Keine Daten für {selected_year}"})
+            )
 
         df_current = df_current.groupby('Label', as_index=False).agg({'Ausfuhr: Wert': 'sum', 'Einfuhr: Wert': 'sum'})
         df_previous = df_previous.groupby('Label', as_index=False).agg({'Ausfuhr: Wert': 'sum', 'Einfuhr: Wert': 'sum'})
@@ -82,58 +85,18 @@ def register_callbacks(app):
         top_4_import_diff = df_diff.nlargest(4, 'import_differenz')
         bottom_4_import_diff = df_diff.nsmallest(4, 'import_differenz')
 
-        # Schrittgrößen berechnen
-        export_max = max(abs(top_4_export_diff['export_differenz'].max()), abs(bottom_4_export_diff['export_differenz'].min()))
-        import_max = max(abs(top_4_import_diff['import_differenz'].max()), abs(bottom_4_import_diff['import_differenz'].min()))
-
-        export_step = determine_step_size(export_max)
-        import_step = determine_step_size(import_max)
-
-        export_ticks = np.arange(-export_max, export_max + export_step, export_step)
-        import_ticks = np.arange(-import_max, import_max + import_step, import_step)
-
         # Export-Diagramm
-        export_fig = go.Figure()
-        export_fig.add_trace(go.Bar(
-            y=top_4_export_diff['Label'],
-            x=top_4_export_diff['export_differenz'],
-            orientation='h',
-            name='Top 4 Zuwächse',
-            marker_color='green'
-        ))
-        export_fig.add_trace(go.Bar(
-            y=bottom_4_export_diff['Label'],
-            x=bottom_4_export_diff['export_differenz'],
-            orientation='h',
-            name='Top 4 Rückgänge',
-            marker_color='red'
-        ))
-        export_fig.update_layout(
-            title=f'Exportdifferenzen ({selected_country}, {selected_year} vs. {selected_year - 1})',
-            xaxis=dict(tickvals=export_ticks, ticktext=[formatter(val) for val in export_ticks]),
-            yaxis_title='Warengruppe'
-        )
+        export_fig = go.Figure([
+            go.Bar(y=top_4_export_diff['Label'], x=top_4_export_diff['export_differenz'], orientation='h', name='Top 4 Zuwächse', marker_color='green'),
+            go.Bar(y=bottom_4_export_diff['Label'], x=bottom_4_export_diff['export_differenz'], orientation='h', name='Top 4 Rückgänge', marker_color='red')
+        ])
+        export_fig.update_layout(title=f'Exportdifferenzen ({selected_country}, {selected_year} vs. {selected_year - 1})')
 
         # Import-Diagramm
-        import_fig = go.Figure()
-        import_fig.add_trace(go.Bar(
-            y=top_4_import_diff['Label'],
-            x=top_4_import_diff['import_differenz'],
-            orientation='h',
-            name='Top 4 Zuwächse',
-            marker_color='green'
-        ))
-        import_fig.add_trace(go.Bar(
-            y=bottom_4_import_diff['Label'],
-            x=bottom_4_import_diff['import_differenz'],
-            orientation='h',
-            name='Top 4 Rückgänge',
-            marker_color='red'
-        ))
-        import_fig.update_layout(
-            title=f'Importdifferenzen ({selected_country}, {selected_year} vs. {selected_year - 1})',
-            xaxis=dict(tickvals=import_ticks, ticktext=[formatter(val) for val in import_ticks]),
-            yaxis_title='Warengruppe'
-        )
+        import_fig = go.Figure([
+            go.Bar(y=top_4_import_diff['Label'], x=top_4_import_diff['import_differenz'], orientation='h', name='Top 4 Zuwächse', marker_color='green'),
+            go.Bar(y=bottom_4_import_diff['Label'], x=bottom_4_import_diff['import_differenz'], orientation='h', name='Top 4 Rückgänge', marker_color='red')
+        ])
+        import_fig.update_layout(title=f'Importdifferenzen ({selected_country}, {selected_year} vs. {selected_year - 1})')
 
         return export_fig, import_fig
