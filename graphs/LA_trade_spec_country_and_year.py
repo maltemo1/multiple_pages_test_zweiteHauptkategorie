@@ -125,7 +125,7 @@ def register_callbacks(app):
         df_selected = df_grouped[(df_grouped['Land'] == selected_country) & (df_grouped['Jahr'] == selected_year)]
         if not df_selected.empty:
             status = df_selected['handelsbilanz_status'].values[0]
-            handelsbilanz = df_selected['handelsbilanz'].values[0]
+            handelsbilanz = df_selected['handelsbilanz'].values[0] / 1e9
             
             info_text = f"Deutschlands Handelsbilanzstatus mit {selected_country} im ausgewählten Jahr: {status} ({handelsbilanz:.2f} Mrd €)" # ({handelsbilanz} €)
         else:
