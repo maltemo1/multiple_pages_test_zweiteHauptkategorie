@@ -14,8 +14,12 @@ csv_path_grouped = os.path.join(os.path.dirname(__file__), "../data/df_grouped.c
 df = pd.read_csv(csv_path)
 df_grouped = pd.read_csv(csv_path_grouped)
 
+# Falls die Daten nicht korrekt geladen wurden, abbrechen
+if df.empty or df_grouped.empty:
+    raise ValueError("CSV-Dateien konnten nicht geladen werden oder sind leer.")
+
 # Werte mit 1000 multiplizieren, um die Originalwerte zu erhalten
-df[['export_wert', 'import_wert', 'handelsvolumen_wert']] = (df[['export_wert', 'import_wert', 'handelsvolumen_wert']] * 1000).astype(int)
+df[['export_wert', 'import_wert', 'handelsvolumen_wert']] = df[['export_wert', 'import_wert', 'handelsvolumen_wert']].fillna(0) * 1000
 
 # Funktion zur Bestimmung der optimalen Schrittgröße für die Y-Achse
 def determine_step_size(max_value):
@@ -42,16 +46,16 @@ def create_layout():
 
         dcc.Dropdown(
             id='la_trade_spec_country_dropdown_country',
-            options=[{'label': country, 'value': country} for country in sorted(df['Land'].unique())],
-            value='Islamische Republik Iran',
+            options=[{'label': country, 'value': country} for country in sorted(df['Land'].dropna().unique())],
+            value='Islamische Republik Iran' if 'Islamische Republik Iran' in df['Land'].values else df['Land'].dropna().unique()[0],
             clearable=False,
             style={'width': '50%'}
         ),
 
         dcc.Dropdown(
             id='la_trade_spec_country_dropdown_year',
-            options=[{'label': str(j), 'value': j} for j in sorted(df['Jahr'].unique())],
-            value=2024,
+            options=[{'label': str(j), 'value': j} for j in sorted(df['Jahr'].dropna().unique())],
+            value=df['Jahr'].dropna().max(),  # Standardmäßig das aktuellste Jahr
             clearable=False,
             style={'width': '50%'}
         ),
@@ -72,6 +76,10 @@ def register_callbacks(app):
     def update_graph(selected_country, selected_year):
         # Daten filtern für das ausgewählte Land und Jahr
         df_filtered = df[(df['Land'] == selected_country) & (df['Jahr'] == selected_year)]
+
+        # Falls keine Daten vorhanden sind, leeren Graph zurückgeben
+        if df_filtered.empty:
+            return go.Figure(), "Keine Daten für dieses Land und Jahr verfügbar."
 
         fig = go.Figure()
 
