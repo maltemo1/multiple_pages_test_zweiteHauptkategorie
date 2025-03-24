@@ -38,7 +38,8 @@ def determine_step_size(max_value):
 # Funktion zur Erstellung des Layouts
 def create_layout():
     return html.Div([
-        html.H1("Handelsdifferenzen nach Warengruppe für ein ausgewähltes Land und Jahr"),
+        html.H1("Handelsdifferenzen nach Warengruppe"),
+        html.H3("Ausgewähltes Land und Jahr"),
 
         dcc.Dropdown(
             id='top4_diff_goods_country_year_dropdown_country',
@@ -104,24 +105,50 @@ def register_callbacks(app):
 
         # Export-Differenzen-Graph
         export_fig = go.Figure()
-        export_fig.add_trace(go.Bar(y=top_4_export_diff['Label'], x=top_4_export_diff['export_differenz'], 
-                                    orientation='h', marker_color='green', name='Top 4 Export'))
-        export_fig.add_trace(go.Bar(y=bottom_4_export_diff['Label'], x=bottom_4_export_diff['export_differenz'], 
-                                    orientation='h', marker_color='red', name='Bottom 4 Export'))
+        export_fig.add_trace(go.Bar(
+            y=top_4_export_diff['Label'],
+            x=top_4_export_diff['export_differenz'], 
+            orientation='h', 
+            marker_color='green', 
+            name='Top 4 Zuwächse',
+            hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
+        ))
+        export_fig.add_trace(go.Bar(
+            y=bottom_4_export_diff['Label'],
+            x=bottom_4_export_diff['export_differenz'], 
+            orientation='h', 
+            marker_color='red', 
+            name='Bottom 4 Verluste',
+            hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
+        ))
         export_fig.update_layout(
-            title=f'Exportdifferenzen ({selected_country}, {selected_year})',
-            xaxis=dict(tickvals=export_ticks, ticktext=[formatter(val) for val in export_ticks])
+            title=f'Export-Differenzen ({selected_country}, {selected_year})',
+            xaxis=dict(tickvals=export_ticks, ticktext=[formatter(val) for val in export_ticks]),
+            legend_title="Kategorie"
         )
 
         # Import-Differenzen-Graph
         import_fig = go.Figure()
-        import_fig.add_trace(go.Bar(y=top_4_import_diff['Label'], x=top_4_import_diff['import_differenz'], 
-                                    orientation='h', marker_color='green', name='Top 4 Import'))
-        import_fig.add_trace(go.Bar(y=bottom_4_import_diff['Label'], x=bottom_4_import_diff['import_differenz'], 
-                                    orientation='h', marker_color='red', name='Bottom 4 Import'))
+        import_fig.add_trace(go.Bar(
+            y=top_4_import_diff['Label'],
+            x=top_4_import_diff['import_differenz'], 
+            orientation='h', 
+            marker_color='green', 
+            name='Top 4 Zuwächse',
+            hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
+        ))
+        import_fig.add_trace(go.Bar(
+            y=bottom_4_import_diff['Label'],
+            x=bottom_4_import_diff['import_differenz'], 
+            orientation='h', 
+            marker_color='red', 
+            name='Bottom 4 Verluste',
+            hovertemplate='%{y}: %{x:,.0f} €<extra></extra>'
+        ))
         import_fig.update_layout(
-            title=f'Importdifferenzen ({selected_country}, {selected_year})',
-            xaxis=dict(tickvals=import_ticks, ticktext=[formatter(val) for val in import_ticks])
+            title=f'Import-Differenzen ({selected_country}, {selected_year})',
+            xaxis=dict(tickvals=import_ticks, ticktext=[formatter(val) for val in import_ticks]),
+            legend_title="Kategorie"
         )
 
         return export_fig, import_fig
