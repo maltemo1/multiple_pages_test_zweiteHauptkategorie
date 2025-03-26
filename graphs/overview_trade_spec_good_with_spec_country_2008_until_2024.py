@@ -53,7 +53,7 @@ def create_layout():
         dcc.Dropdown(
             id='overview_trade_spec_good_dropdown_good',
             options=[{'label': good, 'value': good} for good in sorted(df['Label'].dropna().unique())],
-            value=df['Label'].dropna().unique()[0],  # Standardmäßig erste Ware
+            value="Pharmazeutische Erzeugnisse",  # Standardmäßig erste Ware
             clearable=False,
             style={'width': '50%'}
         ),
@@ -124,6 +124,6 @@ def register_callbacks(app):
         handelsbilanz = total_export - total_import
         status = "Handelsüberschuss" if handelsbilanz > 0 else "Handelsdefizit" if handelsbilanz < 0 else "Ausgeglichene Handelsbilanz"
 
-        info_text = f"Gesamter Export: {total_export:.2f} Mrd €, Gesamter Import: {total_import:.2f} Mrd € → {status} ({handelsbilanz:.2f} Mrd €)"
+        info_text = f"Gesamter Export: {total_export:.2f} Mrd €, Gesamter Import: {total_import:.2f} Mrd € → {status}: {handelsbilanz:.2f} Mrd € (für {selected_good} mit {selected_country} im Zeitraum von 2008-2024)"
 
         return fig, info_text
