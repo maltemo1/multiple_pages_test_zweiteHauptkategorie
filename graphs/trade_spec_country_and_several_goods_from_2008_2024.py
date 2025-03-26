@@ -23,7 +23,12 @@ df[['Ausfuhr: Wert', 'Einfuhr: Wert']] = df[['Ausfuhr: Wert', 'Einfuhr: Wert']].
 colors = [
     "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
     "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
-    "#ff1493", "#00ffff", "#8b0000", "#32cd32", "#ffd700"
+    "#ff1493", "#00ffff", "#8b0000", "#32cd32", "#ffd700",
+    "#4b0082", "#ffa500", "#00ff00", "#800080", "#ff4500",
+    "#4682b4", "#dc143c", "#2e8b57", "#ff6347", "#6a5acd",
+    "#20b2aa", "#ff69b4", "#b8860b", "#008080", "#adff2f",
+    "#c71585", "#8b008b", "#556b2f", "#ff8c00", "#9932cc",
+    "#808000", "#ffdab9", "#00bfff", "#cd5c5c", "#9400d3"
 ]
 
 # Farben Waren zuordnen
@@ -136,7 +141,7 @@ def register_callbacks(app):
         ticktext_import = [formatter(val) for val in tickvals_import]
 
         fig_export.update_layout(
-            title=f'Exportverlauf für {selected_country}',
+            title=f'Jährliche Exporte nach {selected_country}',
             xaxis_title='Jahr',
             yaxis_title='Exportwert in €',
             xaxis=dict(tickmode='array', tickvals=sorted(df_filtered['Jahr'].unique())),
@@ -145,7 +150,7 @@ def register_callbacks(app):
         )
 
         fig_import.update_layout(
-            title=f'Importverlauf für {selected_country}',
+            title=f'Jährliche Importe aus {selected_country}',
             xaxis_title='Jahr',
             yaxis_title='Importwert in €',
             xaxis=dict(tickmode='array', tickvals=sorted(df_filtered['Jahr'].unique())),
@@ -153,5 +158,13 @@ def register_callbacks(app):
             legend=dict(title='Waren')
         )
 
-        return fig_export, fig_import, f"Handelsverlauf von {selected_country} für die ausgewählten Waren (2008-2024)."
+        # Handelsbilanz-Info berechnen
+        total_export = df_filtered['Ausfuhr: Wert'].sum() / 1e9
+        total_import = df_filtered['Einfuhr: Wert'].sum() / 1e9
+        handelsbilanz = total_export - total_import
+        status = "Handelsüberschuss" if handelsbilanz > 0 else "Handelsdefizit" if handelsbilanz < 0 else "Ausgeglichene Handelsbilanz"
+
+        info_text = f"Gesamter Export: {total_export:.2f} Mrd €, Gesamter Import: {total_import:.2f} Mrd € → {status}: {handelsbilanz:.2f} Mrd € (für die ausgewählten Waren mit {selected_country} von 2008-2024)"
+
+        return fig_export, fig_import, info_text
 
