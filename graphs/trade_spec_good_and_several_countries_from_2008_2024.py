@@ -25,7 +25,10 @@ colors = [
     "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
     "#ff1493", "#00ffff", "#8b0000", "#32cd32", "#ffd700",
     "#4b0082", "#ffa500", "#00ff00", "#800080", "#ff4500",
-    "#4682b4", "#dc143c", "#2e8b57", "#ff6347", "#6a5acd"
+    "#4682b4", "#dc143c", "#2e8b57", "#ff6347", "#6a5acd",
+    "#20b2aa", "#ff69b4", "#b8860b", "#008080", "#adff2f",
+    "#c71585", "#8b008b", "#556b2f", "#ff8c00", "#9932cc",
+    "#808000", "#ffdab9", "#00bfff", "#cd5c5c", "#9400d3"
 ]
 
 # Farben Ländern zuordnen
@@ -113,7 +116,7 @@ def register_callbacks(app):
                 mode='lines+markers',
                 name=f"{country} - Export",
                 line=dict(width=2, color=color),
-                hovertemplate=f'<b>{country} - Export</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
+                hovertemplate=f'<b>{country} - {selected_good}</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
             ))
 
             # IMPORT-GRAPH
@@ -123,7 +126,7 @@ def register_callbacks(app):
                 mode='lines+markers',
                 name=f"{country} - Import",
                 line=dict(width=2, color=color),
-                hovertemplate=f'<b>{country} - Import</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
+                hovertemplate=f'<b>{country} - {selected_good}</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
             ))
 
         # Achsenskala berechnen
@@ -155,5 +158,13 @@ def register_callbacks(app):
             legend=dict(title='Länder')
         )
 
-        return fig_export, fig_import, f"Export- und Importverlauf von {selected_good} mit den ausgewählten Ländern."
+                # Handelsbilanz-Info berechnen
+        total_export = df_filtered['Ausfuhr: Wert'].sum() / 1e9
+        total_import = df_filtered['Einfuhr: Wert'].sum() / 1e9
+        handelsbilanz = total_export - total_import
+        status = "Handelsüberschuss" if handelsbilanz > 0 else "Handelsdefizit" if handelsbilanz < 0 else "Ausgeglichene Handelsbilanz"
+
+        info_text = f"Gesamter Export: {total_export:.2f} Mrd €, Gesamter Import: {total_import:.2f} Mrd € → {status}: {handelsbilanz:.2f} Mrd € (für {selected_good} mit den ausgewählten Ländern von 2008-2024)"
+
+        return fig_export, fig_import, info_text
 
