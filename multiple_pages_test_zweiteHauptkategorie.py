@@ -39,7 +39,7 @@ def create_nav_structure():
                 "Top 4 Waren nach Wachstum zum Vorjahr": "top4_growth_goods_spec_country_and_year"
             },
             "Überblick nach bestimmter Ware": {
-                "Gesamter Export- und Importverlauf der Ware mit Deutschland": "#"
+                "Gesamter Export- und Importverlauf der Ware mit Deutschland": "overview_trade_spec_good_with_spec_country_2008_until_2024"
             },
             "Überblick nach bestimmtem Jahr und Ware": {
                 "Monatlicher Verlauf von Export- und Importwerten für die angegebene Ware im Jahr": "#"
@@ -139,7 +139,8 @@ graph_modules = [
     "monthly_trade", "top_10_trade_partners", "top_diff_countries", 
     "top_growth_countries", "top_diff_goods", "top_growth_goods", "top_10_trade_goods",
     "LA_gesamt_export_import_volumen", "country_comparison", "export_import_growth_countries", "export_import_ranking_graph_of_country", "top10_goods_for_spec_country_all_time",
-    "LA_top10_goods_for_spec_country_and_year", "top4_diff_goods_spec_country_and_year", "top4_growth_goods_spec_country_and_year", "LA_trade_spec_country_and_year"
+    "LA_top10_goods_for_spec_country_and_year", "top4_diff_goods_spec_country_and_year", "top4_growth_goods_spec_country_and_year", "LA_trade_spec_country_and_year",
+    "overview_trade_spec_good_with_spec_country_2008_until_2024"
 ]
 
 for module_name in graph_modules:
