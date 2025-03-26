@@ -19,12 +19,16 @@ if df.empty:
 # Werte umrechnen (Tausenderwerte auf Originalwerte)
 df[['Ausfuhr: Wert', 'Einfuhr: Wert']] = df[['Ausfuhr: Wert', 'Einfuhr: Wert']].fillna(0) * 1000
 
-# Farbpalette für Waren (erweitert)
+# Liste der Farben für Konsistenz
 colors = [
-    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b",
-    "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#ff1493", "#00ffff"
+    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
+    "#ff1493", "#00ffff", "#8b0000", "#32cd32", "#ffd700"
 ]
-color_dict = {label: colors[i % len(colors)] for i, label in enumerate(sorted(df['Label'].unique()))}
+
+# Farben Waren zuordnen
+unique_labels = sorted(df['Label'].dropna().unique())
+color_dict = {label: colors[i % len(colors)] for i, label in enumerate(unique_labels)}
 
 # Funktion zur Bestimmung der optimalen Schrittgröße für die Y-Achse
 def determine_step_size(max_value):
@@ -44,13 +48,13 @@ def formatter(value):
     else:
         return f'{value:,.0f} €'
 
-# Funktion zur Erstellung des Layouts
+# Layout-Funktion
 def create_layout():
     return html.Div([
-        html.H1("Jährlicher Export- und Importverlauf mehrerer Waren mit Deutschland"),
+        html.H1("Gesamter Export- und Importverlauf verschiedener Waren mit Deutschland"),
 
         dcc.Dropdown(
-            id='trade_spec_country_and_several_goods_dropdown_country',
+            id='trade_several_goods_dropdown_country',
             options=[{'label': country, 'value': country} for country in sorted(df['Land'].dropna().unique())],
             value='Islamische Republik Iran' if 'Islamische Republik Iran' in df['Land'].values else df['Land'].dropna().unique()[0],
             clearable=False,
@@ -58,7 +62,7 @@ def create_layout():
         ),
 
         dcc.Dropdown(
-            id='trade_spec_country_and_several_goods_dropdown_goods',
+            id='trade_several_goods_dropdown_goods',
             options=[{'label': good, 'value': good} for good in sorted(df['Label'].dropna().unique())],
             value=["Pharmazeutische Erzeugnisse", "Mineralische Brennstoffe usw."],  # Standardwerte
             multi=True,
@@ -66,36 +70,42 @@ def create_layout():
             style={'width': '50%'}
         ),
 
-        html.Div(id='trade_spec_country_and_several_goods_info_text', style={'margin-top': '20px', 'font-size': '16px', 'font-weight': 'bold'}),
+        html.Div(id='trade_several_goods_info_text', style={'margin-top': '20px', 'font-size': '16px', 'font-weight': 'bold'}),
 
-        dcc.Graph(id='trade_spec_country_and_several_goods_graph'),
+        dcc.Graph(id='trade_several_goods_export_graph'),
+        dcc.Graph(id='trade_several_goods_import_graph'),
     ])
 
-# Callback für das Update des Graphen
+# Callback-Registrierung
 def register_callbacks(app):
     @app.callback(
-        [dash.Output('trade_spec_country_and_several_goods_graph', 'figure'),
-         dash.Output('trade_spec_country_and_several_goods_info_text', 'children')],
-        [dash.Input('trade_spec_country_and_several_goods_dropdown_country', 'value'),
-         dash.Input('trade_spec_country_and_several_goods_dropdown_goods', 'value')]
+        [dash.Output('trade_several_goods_export_graph', 'figure'),
+         dash.Output('trade_several_goods_import_graph', 'figure'),
+         dash.Output('trade_several_goods_info_text', 'children')],
+        [dash.Input('trade_several_goods_dropdown_country', 'value'),
+         dash.Input('trade_several_goods_dropdown_goods', 'value')]
     )
-    def update_graph(selected_country, selected_goods):
-        # Daten filtern für das ausgewählte Land und die ausgewählten Waren
+    def update_graphs(selected_country, selected_goods):
         df_filtered = df[(df['Land'] == selected_country) & (df['Label'].isin(selected_goods))]
 
-        # Falls keine Daten vorhanden sind, leeren Graph zurückgeben
+        # Falls keine Daten vorhanden sind, leere Graphen zurückgeben
         if df_filtered.empty:
-            return go.Figure(), f"Keine Daten für die ausgewählten Waren in {selected_country} verfügbar."
+            return go.Figure(), go.Figure(), f"Keine Daten für die ausgewählten Waren in {selected_country} verfügbar."
 
-        fig = go.Figure()
+        # Export- und Import-Graphen
+        fig_export = go.Figure()
+        fig_import = go.Figure()
 
-        # Linien für Export und Import je Ware
+        # Daten für Y-Achsen-Skalierung sammeln
+        max_export = df_filtered['Ausfuhr: Wert'].max()
+        max_import = df_filtered['Einfuhr: Wert'].max()
+
         for good in selected_goods:
             df_good = df_filtered[df_filtered['Label'] == good]
-            color = color_dict.get(good, "#000000")  # Standardfarbe falls nicht in Dictionary
+            color = color_dict.get(good, '#000000')  # Fallback-Farbe falls nicht gefunden
 
-            # EXPORT
-            fig.add_trace(go.Scatter(
+            # EXPORT-GRAPH
+            fig_export.add_trace(go.Scatter(
                 x=df_good['Jahr'],
                 y=df_good['Ausfuhr: Wert'],
                 mode='lines+markers',
@@ -104,44 +114,44 @@ def register_callbacks(app):
                 hovertemplate=f'<b>{good} - Export</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
             ))
 
-            # IMPORT
-            fig.add_trace(go.Scatter(
+            # IMPORT-GRAPH
+            fig_import.add_trace(go.Scatter(
                 x=df_good['Jahr'],
                 y=df_good['Einfuhr: Wert'],
                 mode='lines+markers',
                 name=f"{good} - Import",
-                line=dict(width=2, color=color, dash="dash"),  # Import als gestrichelte Linie
+                line=dict(width=2, color=color),
                 hovertemplate=f'<b>{good} - Import</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
             ))
 
         # Achsenskala berechnen
-        max_value = df_filtered[['Ausfuhr: Wert', 'Einfuhr: Wert']].values.max()
-        step_size = determine_step_size(max_value)
-        rounded_max = math.ceil(max_value / step_size) * step_size
-        tickvals = np.arange(0, rounded_max + 1, step_size)
-        ticktext = [formatter(val) for val in tickvals]
+        step_size_export = determine_step_size(max_export)
+        rounded_max_export = math.ceil(max_export / step_size_export) * step_size_export
+        tickvals_export = np.arange(0, rounded_max_export + 1, step_size_export)
+        ticktext_export = [formatter(val) for val in tickvals_export]
 
-        fig.update_layout(
-            title=f'Jährlicher Export- und Importverlauf mehrerer Waren mit {selected_country}',
+        step_size_import = determine_step_size(max_import)
+        rounded_max_import = math.ceil(max_import / step_size_import) * step_size_import
+        tickvals_import = np.arange(0, rounded_max_import + 1, step_size_import)
+        ticktext_import = [formatter(val) for val in tickvals_import]
+
+        fig_export.update_layout(
+            title=f'Exportverlauf für {selected_country}',
             xaxis_title='Jahr',
-            yaxis_title='Wert in €',
-            xaxis=dict(
-                tickmode='array',
-                tickvals=sorted(df_filtered['Jahr'].unique()),
-            ),
-            yaxis=dict(
-                tickvals=tickvals,
-                ticktext=ticktext
-            ),
-            legend=dict(title='Kategorie', bgcolor='rgba(255,255,255,0.7)')
+            yaxis_title='Exportwert in €',
+            xaxis=dict(tickmode='array', tickvals=sorted(df_filtered['Jahr'].unique())),
+            yaxis=dict(tickvals=tickvals_export, ticktext=ticktext_export),
+            legend=dict(title='Waren')
         )
 
-        # Handelsbilanz-Info berechnen
-        total_export = df_filtered['Ausfuhr: Wert'].sum() / 1e9
-        total_import = df_filtered['Einfuhr: Wert'].sum() / 1e9
-        handelsbilanz = total_export - total_import
-        status = "Handelsüberschuss" if handelsbilanz > 0 else "Handelsdefizit" if handelsbilanz < 0 else "Ausgeglichene Handelsbilanz"
+        fig_import.update_layout(
+            title=f'Importverlauf für {selected_country}',
+            xaxis_title='Jahr',
+            yaxis_title='Importwert in €',
+            xaxis=dict(tickmode='array', tickvals=sorted(df_filtered['Jahr'].unique())),
+            yaxis=dict(tickvals=tickvals_import, ticktext=ticktext_import),
+            legend=dict(title='Waren')
+        )
 
-        info_text = f"Gesamter Export: {total_export:.2f} Mrd €, Gesamter Import: {total_import:.2f} Mrd € → {status}: {handelsbilanz:.2f} Mrd € (für die ausgewählten Waren mit {selected_country} von 2008-2024)"
+        return fig_export, fig_import, f"Handelsverlauf von {selected_country} für die ausgewählten Waren (2008-2024)."
 
-        return fig, info_text
