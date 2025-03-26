@@ -141,7 +141,7 @@ def register_callbacks(app):
         ticktext_import = [formatter(val) for val in tickvals_import]
 
         fig_export.update_layout(
-            title=f'Jährliche Exporte nach {selected_country}',
+            title=f'Jährliche Exporte aus Deutschland nach {selected_country}',
             xaxis_title='Jahr',
             yaxis_title='Exportwert in €',
             xaxis=dict(tickmode='array', tickvals=sorted(df_filtered['Jahr'].unique())),
@@ -150,7 +150,7 @@ def register_callbacks(app):
         )
 
         fig_import.update_layout(
-            title=f'Jährliche Importe aus {selected_country}',
+            title=f'Jährliche Importe aus {selected_country} nach Deutschland',
             xaxis_title='Jahr',
             yaxis_title='Importwert in €',
             xaxis=dict(tickmode='array', tickvals=sorted(df_filtered['Jahr'].unique())),
