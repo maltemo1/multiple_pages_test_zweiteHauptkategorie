@@ -1,181 +1,147 @@
 import dash
 from dash import dcc, html
-from dash.dependencies import Input, Output
 import pandas as pd
-import plotly.express as px
-from statistics import mean
-import glob
-from statsmodels.tsa.seasonal import seasonal_decompose
-import seaborn as sns
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import to_rgba
-from matplotlib.ticker import FuncFormatter
-from dash.dependencies import Input, Output
 import plotly.graph_objects as go
-import math
-import gdown
 import os
+import numpy as np
+import math
 
+# Relativer Pfad zur CSV-Datei
+csv_path = os.path.join(os.path.dirname(__file__), "../data/top10_goods_spec_country_and_year.csv")
 
-# CSV-Datei einlesen
-df = pd.read_csv('data/top10_goods_spec_country_and_year.csv')
+# Daten laden
+df = pd.read_csv(csv_path)
+
+# Falls die Daten nicht korrekt geladen wurden, abbrechen
+if df.empty:
+    raise ValueError("CSV-Datei konnte nicht geladen werden oder ist leer.")
 
 # Werte umrechnen (Tausenderwerte auf Originalwerte)
-df[['Ausfuhr: Wert', 'Einfuhr: Wert']] = (df[['Ausfuhr: Wert', 'Einfuhr: Wert']] * 1000).astype(int)
+df[['Ausfuhr: Wert', 'Einfuhr: Wert']] = df[['Ausfuhr: Wert', 'Einfuhr: Wert']].fillna(0) * 1000
 
-# Funktion zur Formatierung der Y-Achse
+# Liste der Farben für Konsistenz
+colors = [
+    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
+    "#ff1493", "#00ffff", "#8b0000", "#32cd32", "#ffd700",
+    "#4b0082", "#ffa500", "#00ff00", "#800080", "#ff4500"
+]
+
+# Funktion zur Bestimmung der optimalen Schrittgröße für die Y-Achse
+def determine_step_size(max_value):
+    thresholds = [5e6, 10e6, 50e6, 100e6, 250e6, 500e6, 1e9, 5e9, 10e9, 50e9, 100e9]
+    steps = [1e6, 5e6, 10e6, 25e6, 50e6, 100e6, 250e6, 500e6, 1e9, 2e9, 10e9]
+    for i, threshold in enumerate(thresholds):
+        if max_value < threshold:
+            return steps[i]
+    return 25e9
+
+# Y-Achsen-Formatter
 def formatter(value):
     if value >= 1e9:
-        return f'{value / 1e9:.2f} Mrd'
+        return f'{value / 1e9:.2f} Mrd €'
     elif value >= 1e6:
-        return f'{value / 1e6:.0f} Mio'
-    elif value >= 1e3:
-        return f'{value / 1e3:.0f} K'
+        return f'{value / 1e6:.0f} Mio €'
     else:
-        return str(value)
+        return f'{value:,.0f} €'
 
-# Dash-App erstellen
-app = dash.Dash(__name__)
-app.layout = html.Div([
-    html.H1("Top 5 Handelspartner für eine ausgewählte Ware"),
+# Layout-Funktion
+def create_layout():
+    return html.Div([
+        html.H1("Deutschlands Top 5 Export- und Importländer einer ausgewählten Ware (2008–2024)"),
 
-    dcc.Dropdown(
-        id='waren_dropdown',
-        options=[{'label': str(w), 'value': w} for w in sorted(df['Label'].unique())],
-        value='Mineralische Brennstoffe usw.',
-        multi=False,
-        clearable=False,
-        style={'width': '50%'}
-    ),
+        dcc.Dropdown(
+            id='top5_spec_good_dropdown_goods',
+            options=[{'label': good, 'value': good} for good in sorted(df['Label'].dropna().unique())],
+            value='Kraftfahrzeuge, Landfahrzeuge',
+            clearable=False,
+            style={'width': '50%'}
+        ),
 
-    dcc.Graph(id='export_graph'),
-    dcc.Graph(id='import_graph'),
-])
+        dcc.Graph(id='top5_spec_good_export_graph'),
+        dcc.Graph(id='top5_spec_good_import_graph')
+    ])
 
-@app.callback(
-    [Output('export_graph', 'figure'),
-     Output('import_graph', 'figure')],
-    [Input('waren_dropdown', 'value')]
-)
-def update_graphs(selected_label):
-    df_filtered = df[df['Label'] == selected_label]
-
-    if df_filtered.empty:
-        return go.Figure(), go.Figure()
-
-    # Aggregation nach Jahr und Land für Export und Import
-    export_agg = df_filtered.groupby(['Jahr', 'Land'], as_index=False).agg({'Ausfuhr: Wert': 'sum'})
-    import_agg = df_filtered.groupby(['Jahr', 'Land'], as_index=False).agg({'Einfuhr: Wert': 'sum'})
-
-    # Gesamtwerte pro Jahr berechnen
-    export_total_per_year = export_agg.groupby('Jahr')['Ausfuhr: Wert'].sum()
-    import_total_per_year = import_agg.groupby('Jahr')['Einfuhr: Wert'].sum()
-
-    # Top 5 Exportländer
-    top5_exports = export_agg.groupby('Land')['Ausfuhr: Wert'].sum().nlargest(5).index
-    top5_export_df = export_agg[export_agg['Land'].isin(top5_exports)]
-    top5_export_df['Prozentanteil'] = top5_export_df.apply(
-        lambda row: round((row['Ausfuhr: Wert'] / export_total_per_year[row['Jahr']]) * 100, 2), axis=1
+# Callback-Registrierung
+def register_callbacks(app):
+    @app.callback(
+        [dash.Output('top5_spec_good_export_graph', 'figure'),
+         dash.Output('top5_spec_good_import_graph', 'figure')],
+        [dash.Input('top5_spec_good_dropdown_goods', 'value')]
     )
+    def update_graphs(selected_good):
+        df_filtered = df[df['Label'] == selected_good]
 
-    # Top 5 Importländer
-    top5_imports = import_agg.groupby('Land')['Einfuhr: Wert'].sum().nlargest(5).index
-    top5_import_df = import_agg[import_agg['Land'].isin(top5_imports)]
-    top5_import_df['Prozentanteil'] = top5_import_df.apply(
-        lambda row: round((row['Einfuhr: Wert'] / import_total_per_year[row['Jahr']]) * 100, 2), axis=1
-    )
+        if df_filtered.empty:
+            return go.Figure(), go.Figure()
 
-    # Max-Werte für Y-Achsen-Skalierung getrennt berechnen
-    max_export = top5_export_df['Ausfuhr: Wert'].max()
-    max_import = top5_import_df['Einfuhr: Wert'].max()
+        # Gruppieren nach Jahr & Land
+        export_agg = df_filtered.groupby(['Jahr', 'Land'], as_index=False)['Ausfuhr: Wert'].sum()
+        import_agg = df_filtered.groupby(['Jahr', 'Land'], as_index=False)['Einfuhr: Wert'].sum()
 
-    fig_export = go.Figure()
-    fig_import = go.Figure()
+        # Top 5 Länder insgesamt
+        top5_export_countries = export_agg.groupby('Land')['Ausfuhr: Wert'].sum().nlargest(5).index
+        top5_import_countries = import_agg.groupby('Land')['Einfuhr: Wert'].sum().nlargest(5).index
 
-    for country in top5_exports:
-        df_country = top5_export_df[top5_export_df['Land'] == country]
+        export_df = export_agg[export_agg['Land'].isin(top5_export_countries)]
+        import_df = import_agg[import_agg['Land'].isin(top5_import_countries)]
 
-        fig_export.add_trace(go.Scatter(
-            x=df_country['Jahr'],
-            y=df_country['Ausfuhr: Wert'],
-            mode='lines+markers',
-            name=f"{country} - Export",
-            line=dict(width=2),
-            marker=dict(symbol='circle', size=8),
-            hovertemplate=(
-                f'<b>{country} - {selected_label}</b><br>'
-                'Jahr: %{x}<br>'
-                'Wert: %{y:,.0f} €<br>'
-                'Anteil: %{customdata} %<extra></extra>'
-            ),
-            customdata=df_country['Prozentanteil']
-        ))
+        # Max-Werte für Skalierung
+        max_export = export_df['Ausfuhr: Wert'].max()
+        max_import = import_df['Einfuhr: Wert'].max()
 
-    for country in top5_imports:
-        df_country = top5_import_df[top5_import_df['Land'] == country]
+        # EXPORT-GRAPH
+        fig_export = go.Figure()
+        for i, country in enumerate(top5_export_countries):
+            country_df = export_df[export_df['Land'] == country]
+            fig_export.add_trace(go.Scatter(
+                x=country_df['Jahr'],
+                y=country_df['Ausfuhr: Wert'],
+                mode='lines+markers',
+                name=country,
+                line=dict(width=2, color=colors[i % len(colors)]),
+                hovertemplate=f"<b>{country} – {selected_good}</b><br>Jahr: %{{x}}<br>Export: %{{y:,.0f}} €<extra></extra>"
+            ))
 
-        fig_import.add_trace(go.Scatter(
-            x=df_country['Jahr'],
-            y=df_country['Einfuhr: Wert'],
-            mode='lines+markers',
-            name=f"{country} - Import",
-            line=dict(width=2),
-            marker=dict(symbol='x', size=8),
-            hovertemplate=(
-                f'<b>{country} - {selected_label}</b><br>'
-                'Jahr: %{x}<br>'
-                'Wert: %{y:,.0f} €<br>'
-                'Anteil: %{customdata} %<extra></extra>'
-            ),
-            customdata=df_country['Prozentanteil']
-        ))
+        step_export = determine_step_size(max_export)
+        rounded_max_export = math.ceil(max_export / step_export) * step_export
+        tickvals_export = np.arange(0, rounded_max_export + 1, step_export)
+        ticktext_export = [formatter(val) for val in tickvals_export]
 
-    # Dynamische Schrittgröße für Y-Achse
-    def get_step_size(max_value):
-        if max_value < 1e3: return 100
-        elif max_value < 5e3: return 500
-        elif max_value < 1e4: return 1e3
-        elif max_value < 5e4: return 5e3
-        elif max_value < 1e5: return 10e3
-        elif max_value < 5e5: return 50e3
-        elif max_value < 1e6: return 100e3
-        elif max_value < 5e6: return 1e6
-        elif max_value < 10e6: return 5e6
-        elif max_value < 50e6: return 10e6
-        elif max_value < 100e6: return 25e6
-        elif max_value < 250e6: return 50e6
-        elif max_value < 500e6: return 100e6
-        elif max_value < 1e9: return 250e6
-        elif max_value < 5e9: return 500e6
-        elif max_value < 10e9: return 1e9
-        elif max_value < 50e9: return 2e9
-        elif max_value < 100e9: return 10e9
-        else: return 25e9
+        fig_export.update_layout(
+            title=f"Top 5 Exportländer für {selected_good}",
+            xaxis_title="Jahr",
+            yaxis_title="Exportwert in €",
+            xaxis=dict(tickmode='array', tickvals=sorted(export_df['Jahr'].unique())),
+            yaxis=dict(tickvals=tickvals_export, ticktext=ticktext_export),
+            legend=dict(title="Länder")
+        )
 
-    step_export = get_step_size(max_export)
-    step_import = get_step_size(max_import)
+        # IMPORT-GRAPH
+        fig_import = go.Figure()
+        for i, country in enumerate(top5_import_countries):
+            country_df = import_df[import_df['Land'] == country]
+            fig_import.add_trace(go.Scatter(
+                x=country_df['Jahr'],
+                y=country_df['Einfuhr: Wert'],
+                mode='lines+markers',
+                name=country,
+                line=dict(width=2, color=colors[i % len(colors)]),
+                hovertemplate=f"<b>{country} – {selected_good}</b><br>Jahr: %{{x}}<br>Import: %{{y:,.0f}} €<extra></extra>"
+            ))
 
-    tickvals_export = np.arange(0, math.ceil(max_export / step_export) * step_export + 1, step_export)
-    tickvals_import = np.arange(0, math.ceil(max_import / step_import) * step_import + 1, step_import)
+        step_import = determine_step_size(max_import)
+        rounded_max_import = math.ceil(max_import / step_import) * step_import
+        tickvals_import = np.arange(0, rounded_max_import + 1, step_import)
+        ticktext_import = [formatter(val) for val in tickvals_import]
 
-    fig_export.update_layout(
-        title='Top 5 Exportdestinationen Deutschlands',
-        xaxis_title='Jahr',
-        yaxis_title='Wert in €',
-        yaxis=dict(tickvals=tickvals_export, ticktext=[formatter(val) for val in tickvals_export]),
-        legend=dict(title='Exportländer', bgcolor='rgba(255,255,255,0.7)')
-    )
+        fig_import.update_layout(
+            title=f"Top 5 Importländer für {selected_good}",
+            xaxis_title="Jahr",
+            yaxis_title="Importwert in €",
+            xaxis=dict(tickmode='array', tickvals=sorted(import_df['Jahr'].unique())),
+            yaxis=dict(tickvals=tickvals_import, ticktext=ticktext_import),
+            legend=dict(title="Länder")
+        )
 
-    fig_import.update_layout(
-        title='Top 5 Importländer Deutschlands',
-        xaxis_title='Jahr',
-        yaxis_title='Wert in €',
-        yaxis=dict(tickvals=tickvals_import, ticktext=[formatter(val) for val in tickvals_import]),
-        legend=dict(title='Importländer', bgcolor='rgba(255,255,255,0.7)')
-    )
-
-    return fig_export, fig_import
-
-if __name__ == '__main__':
-    app.run(debug=True)
+        return fig_export, fig_import
