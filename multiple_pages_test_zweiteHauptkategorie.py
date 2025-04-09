@@ -127,7 +127,7 @@ def render_graph(pathname):
         else:
             return html.Div(f"Graph {graph_name} does not have a create_layout() function"), 404
     except ModuleNotFoundError:
-        return html.Div(f"Graph {graph_name} not found"), 404
+        return html.Div(f"Es wurde kein gültiger Graph ausgewählt. {graph_name} Bitte wählen Sie links in der Sidebar bzw. Navigation einen Graphen aus.")
 
 # Dynamische Registrierung der Callbacks
 graph_modules = [
