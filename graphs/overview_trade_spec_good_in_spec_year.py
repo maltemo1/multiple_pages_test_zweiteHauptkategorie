@@ -1,175 +1,122 @@
 import dash
 from dash import dcc, html
-from dash.dependencies import Input, Output
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
+import os
+import numpy as np
 import math
 
-# CSV-Datei einlesen
-df = pd.read_csv('data/aggregated_df.csv')
+# Relativer Pfad zur CSV-Datei
+csv_path = os.path.join(os.path.dirname(__file__), "../data/aggregated_df.csv")
 
-# Funktion zur Formatierung der Y-Achse
+# Daten laden
+df = pd.read_csv(csv_path)
+
+# Falls die Daten nicht korrekt geladen wurden, abbrechen
+if df.empty:
+    raise ValueError("CSV-Datei konnte nicht geladen werden oder ist leer.")
+
+# Funktion zur Bestimmung der optimalen Schrittgröße für die Y-Achse
+def determine_step_size(max_value):
+    thresholds = [1e6, 5e6, 10e6, 50e6, 100e6, 250e6, 500e6, 1e9, 2e9, 10e9, 50e9]
+    steps = [100e3, 500e3, 1e6, 5e6, 10e6, 25e6, 50e6, 100e6, 250e6, 1e9, 2e9]
+    for i, threshold in enumerate(thresholds):
+        if max_value < threshold:
+            return steps[i]
+    return 5e9
+
+# Funktion zur Y-Achsen-Formatierung
 def formatter(value):
     if value >= 1e9:
-        return f'{value / 1e9:.2f} Mrd'
+        return f'{value / 1e9:.2f} Mrd €'
     elif value >= 1e6:
-        return f'{value / 1e6:.0f} Mio'
-    elif value >= 1e3:
-        return f'{value / 1e3:.0f} K'
+        return f'{value / 1e6:.0f} Mio €'
     else:
-        return str(value)
+        return f'{value:,.0f} €'
 
-# Dash-App erstellen
-app = dash.Dash(__name__)
-app.layout = html.Div([
-    html.H1("Monatlicher Handelsverlauf für ausgewählte Waren"),
+# Layout-Funktion
+def create_layout():
+    return html.Div([
+        html.H1("Monatlicher Handelsverlauf für ausgewählte Waren"),
 
-    dcc.Dropdown(
-        id='jahr_dropdown',
-        options=[{'label': str(j), 'value': j} for j in sorted(df['Jahr'].unique())],
-        value=2024,
-        clearable=False,
-        style={'width': '50%'}
-    ),
-
-    dcc.Dropdown(
-        id='ware_dropdown',
-        options=[{'label': str(w), 'value': w} for w in sorted(df['Label'].unique())],
-        value='Mineralische Brennstoffe usw.',
-        clearable=False,
-        style={'width': '50%'}
-    ),
-
-    html.Div(id='info_text', style={'margin-top': '20px', 'font-size': '16px', 'font-weight': 'bold'}),
-
-    dcc.Graph(id='monatlicher_warenhandel_graph'),
-])
-
-@app.callback(
-    [Output('monatlicher_warenhandel_graph', 'figure'),
-     Output('info_text', 'children')],
-    [Input('jahr_dropdown', 'value'),
-     Input('ware_dropdown', 'value')]
-)
-def update_graph(year_selected, ware_selected):
-    df_filtered = df[(df['Jahr'] == year_selected) & (df['Label'] == ware_selected)]
-
-    fig = go.Figure()
-
-    for col, name, color in zip(
-        ['Ausfuhr: Wert', 'Einfuhr: Wert'],
-        ['Exportvolumen', 'Importvolumen'],
-        ['#1f77b4', '#ff7f0e']
-    ):
-        fig.add_trace(go.Scatter(
-            x=df_filtered['Monat'],
-            y=df_filtered[col],
-            mode='lines+markers',
-            name=name,
-            line=dict(width=2, color=color),
-            hovertemplate=f'<b>{name}</b><br>Monat: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
-        ))
-
-    max_value = df_filtered[['Ausfuhr: Wert', 'Einfuhr: Wert']].values.max()
-
-    # # Dynamische Schrittweite für y-Achse
-    # if max_value < 5e6:
-    #     step = 1e6
-    # elif max_value < 10e6:
-    #     step = 5e6
-    # elif max_value < 50e6:
-    #     step = 10e6
-    # elif max_value < 100e6:
-    #     step = 25e6
-    # elif max_value < 250e6:
-    #     step = 50e6
-    # elif max_value < 500e6:
-    #     step = 100e6
-    # elif max_value < 1e9:
-    #     step = 250e6
-    # elif max_value < 5e9:
-    #     step = 500e6
-    # elif max_value < 10e9:
-    #     step = 1e9
-    # elif max_value < 50e9:
-    #     step = 2e9
-    # elif max_value < 100e9:
-    #     step = 10e9
-    # else:
-    #     step = 25e9
-
-        # Dynamische Schrittweite für y-Achse
-    if max_value < 1e6:
-        step = 100e3
-    elif max_value < 5e6:
-        step = 500e3
-    elif max_value < 10e6:
-        step = 1e6
-    elif max_value < 50e6:
-        step = 5e6
-    elif max_value < 100e6:
-        step = 10e6
-    elif max_value < 250e6:
-        step = 25e6
-    elif max_value < 500e6:
-        step = 50e6
-    elif max_value < 1e9:
-        step = 100e6
-    elif max_value < 2e9:
-        step = 250e6
-    elif max_value < 5e9:
-        step = 500e6
-    elif max_value < 10e9:
-        step = 1e9
-    elif max_value < 50e9:
-        step = 2e9
-    elif max_value < 100e9:
-        step = 10e9
-    else:
-        step = 25e9
-
-
-    rounded_max = math.ceil(max_value / step) * step
-    tickvals = np.arange(0, rounded_max + 1, step)
-    ticktext = [formatter(val) for val in tickvals]
-
-    fig.update_layout(
-        title=f'Monatlicher Export- und Importverlauf von {ware_selected} im Jahr {year_selected}',
-        xaxis_title='Monat',
-        yaxis_title='Wert in €',
-        xaxis=dict(
-            tickmode='array',
-            tickvals=list(range(1, 13)),
-            ticktext=['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
+        dcc.Dropdown(
+            id='overview_trade_spec_good_in_spec_year_dropdown_year',
+            options=[{'label': str(j), 'value': j} for j in sorted(df['Jahr'].dropna().unique())],
+            value=df['Jahr'].dropna().max(),  # Aktuellstes Jahr
+            clearable=False,
+            style={'width': '50%'}
         ),
-        yaxis=dict(
-            tickvals=tickvals,
-            ticktext=ticktext
+
+        dcc.Dropdown(
+            id='overview_trade_spec_good_in_spec_year_dropdown_good',
+            options=[{'label': str(w), 'value': w} for w in sorted(df['Label'].dropna().unique())],
+            value='Mineralische Brennstoffe usw.' if 'Mineralische Brennstoffe usw.' in df['Label'].values else df['Label'].dropna().unique()[0],
+            clearable=False,
+            style={'width': '50%'}
         ),
-        legend=dict(title='Kategorie', bgcolor='rgba(255,255,255,0.7)')
+
+        html.Div(id='overview_trade_spec_good_in_spec_year_info_text', style={'margin-top': '20px', 'font-size': '16px', 'font-weight': 'bold'}),
+
+        dcc.Graph(id='overview_trade_spec_good_in_spec_year_graph'),
+    ])
+
+# Callback-Registrierung
+def register_callbacks(app):
+    @app.callback(
+        [dash.Output('overview_trade_spec_good_in_spec_year_graph', 'figure'),
+         dash.Output('overview_trade_spec_good_in_spec_year_info_text', 'children')],
+        [dash.Input('overview_trade_spec_good_in_spec_year_dropdown_year', 'value'),
+         dash.Input('overview_trade_spec_good_in_spec_year_dropdown_good', 'value')]
     )
+    def update_graph(selected_year, selected_good):
+        # Daten filtern
+        df_filtered = df[(df['Jahr'] == selected_year) & (df['Label'] == selected_good)]
 
-    # Ranking-Logik
-    df_ranking = df[df['Jahr'] == year_selected].groupby(['Jahr', 'Label'], as_index=False).agg(
-        {'Ausfuhr: Wert': 'sum', 'Einfuhr: Wert': 'sum'}
-    )
+        if df_filtered.empty:
+            return go.Figure(), "Keine Daten für diese Auswahl verfügbar."
 
-    df_ranking['Export-Rang'] = df_ranking['Ausfuhr: Wert'].rank(method='min', ascending=False)
-    df_ranking['Import-Rang'] = df_ranking['Einfuhr: Wert'].rank(method='min', ascending=False)
+        fig = go.Figure()
 
-    selected_product = df_ranking[df_ranking['Label'] == ware_selected]
+        # Export / Import Linien hinzufügen
+        for col, name, color in zip(
+            ['Ausfuhr: Wert', 'Einfuhr: Wert'],
+            ['Exportvolumen', 'Importvolumen'],
+            ['#1f77b4', '#ff7f0e']
+        ):
+            fig.add_trace(go.Scatter(
+                x=df_filtered['Monat'],
+                y=df_filtered[col],
+                mode='lines+markers',
+                name=name,
+                line=dict(width=2, color=color),
+                hovertemplate=f'<b>{name}</b><br>Monat: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
+            ))
 
-    if selected_product.empty:
-        info_text = f"Keine Daten für {ware_selected} im Jahr {year_selected} verfügbar."
-    else:
-        export_rank = int(selected_product['Export-Rang'].values[0])
-        import_rank = int(selected_product['Import-Rang'].values[0])
-        info_text = (f"Unter allen deutschen Import- und Exportwaren belegt die Warengruppe '{ware_selected}' "
-                     f"im Jahr {year_selected} den {export_rank}. Platz beim Exportvolumen "
-                     f"und den {import_rank}. Platz beim Importvolumen.")
+        # Y-Achsen-Skalierung
+        max_value = df_filtered[['Ausfuhr: Wert', 'Einfuhr: Wert']].values.max()
+        step_size = determine_step_size(max_value)
+        rounded_max = math.ceil(max_value / step_size) * step_size
+        tickvals = np.arange(0, rounded_max + 1, step_size)
+        ticktext = [formatter(val) for val in tickvals]
 
-    return fig, info_text
+        # Achsen und Layout
+        fig.update_layout(
+            title=f'Monatlicher Export- und Importverlauf der Ware "{selected_good}" im Jahr {selected_year}',
+            xaxis_title='Monat',
+            yaxis_title='Wert in €',
+            xaxis=dict(
+                tickmode='array',
+                tickvals=list(range(1, 13)),
+                ticktext=['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
+            ),
+            yaxis=dict(
+                tickvals=tickvals,
+                ticktext=ticktext
+            ),
+            legend=dict(title='Kategorie', bgcolor='rgba(255,255,255,0.7)')
+        )
 
-if __name__ == '__main__':
-    app.run(debug=True)
+        # Info-Text
+        info_text = f"Darstellung des monatlichen Export- und Importverlaufs der Ware '{selected_good}' im Jahr {selected_year}."
+
+        return fig, info_text
