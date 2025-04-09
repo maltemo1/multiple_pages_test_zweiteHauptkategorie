@@ -51,16 +51,12 @@ def create_nav_structure():
         },
         "Warenanalyse": {
             "Gesamtüberblick seit 2008 bis 2024": {
-                "Gesamter Export- und Importverlauf der Ware": "overview_trade_spec_good_2008_until_2024",
-                "Deutschlands Top 5 Export- und Importländer der Ware": "top5_countries_for_spec_good"
-            },
-            "Überblick mit mehreren Waren über bestimmten Zeitraum": {
-                "Gesamter Export- und Importverlauf ausgewählter Waren (jährliche Werte)": "overview_trade_several_goods_2008_until_2024",
-                "Gesamter Export- und Importverlauf einer Ware im ausgewählten Jahr (monatliche Werte)": "overview_trade_spec_good_in_spec_year"
+                "Gesamter Export- und Importverlauf einer Ware": "overview_trade_spec_good_2008_until_2024",
+                "Gesamter Export- und Importverlauf mehrerer Waren": "overview_trade_several_goods_2008_until_2024",
+                "Deutschlands Top 5 Export- und Importländer einer Ware": "top5_countries_for_spec_good"
             },
             "Überblick nach bestimmtem Jahr": {
-                "Ranking der Ware im Vergleich zu anderen Waren": "#",
-                "Monatlicher Export- und Importvolumen-Verlauf der Ware": "#"
+                "Gesamter Export- und Importverlauf einer Ware im ausgewählten Jahr + Ranking": "overview_trade_spec_good_in_spec_year"
             },
             "Überblick nach bestimmtem Land": {
                 "Gesamter Export- und Importverlauf der Ware von bzw. nach Deutschland": "#"
