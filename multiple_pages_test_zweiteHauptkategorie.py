@@ -55,8 +55,8 @@ def create_nav_structure():
                 "Deutschlands Top 5 Export- und Importländer der Ware": "top5_countries_for_spec_good"
             },
             "Überblick mit mehreren Waren über bestimmten Zeitraum": {
-                "Gesamter Export- und Importverlauf der Waren (jährliche Werte)": "overview_trade_several_goods_2008_until_2024",
-                "Gesamter Export- und Importverlauf der Waren (monatliche Werte)": "overview_trade_spec_good_in_spec_year"
+                "Gesamter Export- und Importverlauf ausgewählter Waren (jährliche Werte)": "overview_trade_several_goods_2008_until_2024",
+                "Gesamter Export- und Importverlauf einer Ware im ausgewählten Jahr (monatliche Werte)": "overview_trade_spec_good_in_spec_year"
             },
             "Überblick nach bestimmtem Jahr": {
                 "Ranking der Ware im Vergleich zu anderen Waren": "#",
