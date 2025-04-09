@@ -1,24 +1,16 @@
 import dash
 from dash import dcc, html
-from dash.dependencies import Input, Output
 import pandas as pd
-import plotly.express as px
-from statistics import mean
-import glob
-from statsmodels.tsa.seasonal import seasonal_decompose
-import seaborn as sns
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import to_rgba
-from matplotlib.ticker import FuncFormatter
-from dash.dependencies import Input, Output
 import plotly.graph_objects as go
-import math
-import gdown
 import os
+import numpy as np
+import math
 
-# CSV-Datei einlesen
-df = pd.read_csv('/content/drive/MyDrive/DIIHK/Data/Render_Data_Sets/aggregated_df.csv')
+# Relativer Pfad zur CSV-Datei
+csv_path = os.path.join(os.path.dirname(__file__), "../data/aggregated_df.csv")
+
+# Daten laden
+df = pd.read_csv(csv_path)
 
 # Monatliche Werte in jährliche Werte aggregieren
 df_yearly = df.groupby(['Jahr', 'Label'], as_index=False).agg({
@@ -26,131 +18,104 @@ df_yearly = df.groupby(['Jahr', 'Label'], as_index=False).agg({
     'Einfuhr: Wert': 'sum'
 })
 
-# Funktion zur Formatierung der Y-Achse
+# Werte auf Originalniveau bringen, falls nötig
+df_yearly[['Ausfuhr: Wert', 'Einfuhr: Wert']] = df_yearly[['Ausfuhr: Wert', 'Einfuhr: Wert']].fillna(0)
+
+# Funktion zur optimalen Y-Achsen-Schrittweite
+def determine_step_size(max_value):
+    thresholds = [5e6, 10e6, 50e6, 100e6, 250e6, 500e6, 1e9, 5e9, 10e9, 50e9, 100e9]
+    steps = [1e6, 5e6, 10e6, 25e6, 50e6, 100e6, 250e6, 500e6, 1e9, 2e9, 10e9]
+    for i, threshold in enumerate(thresholds):
+        if max_value < threshold:
+            return steps[i]
+    return 25e9
+
+# Formatierung der Y-Achse
 def formatter(value):
     if value >= 1e9:
-        return f'{value / 1e9:.2f} Mrd'
+        return f'{value / 1e9:.2f} Mrd €'
     elif value >= 1e6:
-        return f'{value / 1e6:.0f} Mio'
-    elif value >= 1e3:
-        return f'{value / 1e3:.0f} K'
+        return f'{value / 1e6:.0f} Mio €'
     else:
-        return str(value)
+        return f'{value:,.0f} €'
 
-# Dash-App erstellen
-app = dash.Dash(__name__)
-app.layout = html.Div([
-    html.H1("Jährlicher Export- und Importverlauf einer Ware mit Deutschland"),
+# Layout-Funktion
+def create_layout():
+    return html.Div([
+        html.H1("Gesamtüberblick: Ex- und Importe einer Ware (2008–2024)"),
 
-    dcc.Dropdown(
-        id='ware_dropdown',
-        options=[{'label': str(w), 'value': w} for w in sorted(df_yearly['Label'].unique())],
-        value='Mineralische Brennstoffe usw.',
-        clearable=False,
-        style={'width': '50%'}
-    ),
-
-    html.Div(id='info_text', style={'margin-top': '20px', 'font-size': '16px', 'font-weight': 'bold'}),
-
-    dcc.Graph(id='jahresverlauf_graph'),
-])
-
-@app.callback(
-    [Output('jahresverlauf_graph', 'figure'),
-     Output('info_text', 'children')],
-    [Input('ware_dropdown', 'value')]
-)
-def update_graph(selected_label):
-    df_filtered = df_yearly[df_yearly['Label'] == selected_label]
-
-    if df_filtered.empty:
-        return go.Figure(), f"Keine Daten für {selected_label} verfügbar."
-
-    fig = go.Figure()
-
-    for col, name, color in zip(
-        ['Ausfuhr: Wert', 'Einfuhr: Wert'],
-        ['Exportwert', 'Importwert'],
-        ['#1f77b4', '#ff7f0e']
-    ):
-        fig.add_trace(go.Scatter(
-            x=df_filtered['Jahr'],
-            y=df_filtered[col],
-            mode='lines+markers',
-            name=name,
-            line=dict(width=2, color=color),
-            hovertemplate=f'<b>{name}</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
-        ))
-
-    max_value = df_filtered[['Ausfuhr: Wert', 'Einfuhr: Wert']].values.max()
-
-    # Dynamische Schrittgröße für die y-Achse
-    if max_value < 1e3:
-        step = 100
-    elif max_value < 5e3:
-        step = 500
-    elif max_value < 1e4:
-        step = 1e3
-    elif max_value < 5e4:
-        step = 5e3
-    elif max_value < 1e5:
-        step = 10e3
-    elif max_value < 5e5:
-        step = 50e3
-    elif max_value < 1e6:
-        step = 100e3
-    elif max_value < 5e6:
-        step = 1e6
-    elif max_value < 10e6:
-        step = 5e6
-    elif max_value < 50e6:
-        step = 10e6
-    elif max_value < 100e6:
-        step = 25e6
-    elif max_value < 250e6:
-        step = 50e6
-    elif max_value < 500e6:
-        step = 100e6
-    elif max_value < 1e9:
-        step = 250e6
-    elif max_value < 5e9:
-        step = 500e6
-    elif max_value < 10e9:
-        step = 1e9
-    elif max_value < 50e9:
-        step = 2e9
-    elif max_value < 100e9:
-        step = 10e9
-    else:
-        step = 25e9
-
-    rounded_max = math.ceil(max_value / step) * step
-    tickvals = np.arange(0, rounded_max + 1, step)
-    ticktext = [formatter(val) for val in tickvals]
-
-    fig.update_layout(
-        title=f'Deutschlands jährlicher Export- und Importverlauf von {selected_label}',
-        xaxis_title='Jahr',
-        yaxis_title='Wert in €',
-        xaxis=dict(
-            tickmode='array',
-            tickvals=sorted(df_filtered['Jahr'].unique()),
+        dcc.Dropdown(
+            id='overview_trade_spec_good_dropdown_good_only',
+            options=[{'label': good, 'value': good} for good in sorted(df_yearly['Label'].dropna().unique())],
+            value='Mineralische Brennstoffe usw.' if 'Mineralische Brennstoffe usw.' in df_yearly['Label'].values else df_yearly['Label'].dropna().unique()[0],
+            clearable=False,
+            style={'width': '50%'}
         ),
-        yaxis=dict(
-            tickvals=tickvals,
-            ticktext=ticktext
-        ),
-        legend=dict(title='Kategorie', bgcolor='rgba(255,255,255,0.7)')
+
+        html.Div(id='overview_trade_spec_good_info_text_good_only', style={'margin-top': '20px', 'font-size': '16px', 'font-weight': 'bold'}),
+
+        dcc.Graph(id='overview_trade_spec_good_graph_good_only'),
+    ])
+
+# Callback-Registrierung
+def register_callbacks(app):
+    @app.callback(
+        [dash.Output('overview_trade_spec_good_graph_good_only', 'figure'),
+         dash.Output('overview_trade_spec_good_info_text_good_only', 'children')],
+        [dash.Input('overview_trade_spec_good_dropdown_good_only', 'value')]
     )
+    def update_graph(selected_good):
+        df_filtered = df_yearly[df_yearly['Label'] == selected_good]
 
-    total_export = df_filtered['Ausfuhr: Wert'].sum() / 1e9
-    total_import = df_filtered['Einfuhr: Wert'].sum() / 1e9
+        if df_filtered.empty:
+            return go.Figure(), f"Keine Daten für {selected_good} verfügbar."
 
-    info_text = (f"Für {selected_label} zwischen Deutschland und der Welt beträgt "
-                 f"der gesamte Exportwert {total_export:.0f} Mrd € und "
-                 f"der gesamte Importwert {total_import:.0f} Mrd € von 2008 bis 2024.")
+        fig = go.Figure()
 
-    return fig, info_text
+        # Linienplot für Export & Import
+        for col, name, color in zip(
+            ['Ausfuhr: Wert', 'Einfuhr: Wert'],
+            ['Exportwert', 'Importwert'],
+            ['#1f77b4', '#ff7f0e']
+        ):
+            fig.add_trace(go.Scatter(
+                x=df_filtered['Jahr'],
+                y=df_filtered[col],
+                mode='lines+markers',
+                name=name,
+                line=dict(width=2, color=color),
+                hovertemplate=f'<b>{name}</b><br>Jahr: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
+            ))
 
-if __name__ == '__main__':
-    app.run(debug=True)
+        # Y-Achse skalieren
+        max_value = df_filtered[['Ausfuhr: Wert', 'Einfuhr: Wert']].values.max()
+        step_size = determine_step_size(max_value)
+        rounded_max = math.ceil(max_value / step_size) * step_size
+        tickvals = np.arange(0, rounded_max + 1, step_size)
+        ticktext = [formatter(val) for val in tickvals]
+
+        fig.update_layout(
+            title=f'Export- und Importverlauf von {selected_good} weltweit (2008–2024)',
+            xaxis_title='Jahr',
+            yaxis_title='Wert in €',
+            xaxis=dict(
+                tickmode='array',
+                tickvals=sorted(df_filtered['Jahr'].unique()),
+            ),
+            yaxis=dict(
+                tickvals=tickvals,
+                ticktext=ticktext
+            ),
+            legend=dict(title='Kategorie', bgcolor='rgba(255,255,255,0.7)')
+        )
+
+        # Info-Text
+        total_export = df_filtered['Ausfuhr: Wert'].sum() / 1e9
+        total_import = df_filtered['Einfuhr: Wert'].sum() / 1e9
+
+        info_text = (
+            f"Gesamter Export: {total_export:.2f} Mrd €, Gesamter Import: {total_import:.2f} Mrd € "
+            f"→ Zeitraum: 2008–2024 für {selected_good} zwischen Deutschland und der Welt."
+        )
+
+        return fig, info_text
