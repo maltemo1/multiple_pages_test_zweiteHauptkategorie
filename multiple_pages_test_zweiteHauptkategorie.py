@@ -39,14 +39,14 @@ def create_nav_structure():
                 "Top 4 Waren nach Wachstum zum Vorjahr": "top4_growth_goods_spec_country_and_year"
             },
             "Überblick nach bestimmter Ware": {
-                "Gesamter Export- und Importverlauf einer Ware mit Deutschland": "overview_trade_spec_good_with_spec_country_2008_until_2024"
+                "Deutschlands gesamter Export- und Importverlauf einer Ware mit einem Land": "overview_trade_spec_good_with_spec_country_2008_until_2024"
             },
             "Überblick nach bestimmtem Jahr und Ware": {
                 "Monatlicher Verlauf von Export- und Importwerten für die angegebene Ware im Jahr": "#"
             },
             "Überblick nach bestimmten Länder und Waren": {
-                "Export- und Importverlauf (jährlich) bestimmter Waren für ein bestimmtes Land": "trade_spec_country_and_several_goods_from_2008_2024",
-                "Export- und Importverlauf (jährlich) einer bestimmten Ware für bestimmte Länder": "trade_spec_good_and_several_countries_from_2008_2024"
+                "Export- und Importverlauf (jährlich) mehrerer Waren für ein Land": "trade_spec_country_and_several_goods_from_2008_2024",
+                "Export- und Importverlauf (jährlich) einer Ware für mehrere Länder": "trade_spec_good_and_several_countries_from_2008_2024"
             }
         },
         "Warenanalyse": {
@@ -59,11 +59,11 @@ def create_nav_structure():
                 "Gesamter Export- und Importverlauf einer Ware im ausgewählten Jahr + Ranking": "overview_trade_spec_good_in_spec_year"
             },
             "Überblick nach bestimmtem Land": {
-                "Gesamter Export- und Importverlauf einer Ware mit Deutschland": "overview_trade_spec_good_with_spec_country_2008_until_2024"
+                "Deutschlands gesamter Export- und Importverlauf einer Ware mit einem Land": "overview_trade_spec_good_with_spec_country_2008_until_2024"
             },
-            "Überblick nach bestimmtem Zeitraum und Land und Waren": {
-                "Export- und Importverlauf (jährlich) mehrerer Waren für ein bestimmtes Land": "#",
-                "Export- und Importverlauf (jährlich) einer bestimmten Ware für bestimmte Länder": "#"
+            "Überblick nach bestimmten Länder und Waren": {
+                "Export- und Importverlauf (jährlich) mehrerer Waren für ein Land": "trade_spec_country_and_several_goods_from_2008_2024",
+                "Export- und Importverlauf (jährlich) einer Ware für mehrere Länder": "trade_spec_good_and_several_countries_from_2008_2024"
             }
         }
     }
