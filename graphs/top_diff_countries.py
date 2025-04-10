@@ -23,7 +23,7 @@ def generate_ticks(min_value, max_value, step_size):
 # Layout für das Diagramm
 def create_layout():
     return html.Div([
-        html.H1("Länder mit größten Handelsdifferenzen pro Jahr"),
+        html.H1("Länder mit größten Handelsdifferenzen mit Deutschland zum Vorjahr"),
 
         # Dropdown-Menü für Jahrsauswahl
         dcc.Dropdown(
