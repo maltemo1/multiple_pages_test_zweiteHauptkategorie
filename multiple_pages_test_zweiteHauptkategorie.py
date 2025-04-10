@@ -57,7 +57,7 @@ def create_nav_structure():
             },
             "Überblick nach bestimmtem Jahr": {
                 "Gesamter Export- und Importverlauf einer Ware im ausgewählten Jahr + Ranking": "overview_trade_spec_good_in_spec_year",
-                "Testung": "top_10_trade_partners_spec_good"
+                "Top 10 Handelspartner im ausgewählten Jahr mit ausgewählter Ware": "top_10_trade_partners_spec_good"
             },
             "Überblick nach bestimmtem Land": {
                 "Deutschlands gesamter Export- und Importverlauf einer Ware mit einem Land": "overview_trade_spec_good_with_spec_country_2008_until_2024"
