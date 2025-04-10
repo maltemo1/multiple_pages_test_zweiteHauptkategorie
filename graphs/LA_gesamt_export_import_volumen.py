@@ -25,7 +25,7 @@ def formatter(value):
 # Layout für die Multi-Page-App
 def create_layout():
     return html.Div([
-        html.H1("Deutschlands Handelsbeziehungen mit anderen Ländern"),
+        html.H1("Deutschlands Handelsverlauf mit einem ausgewählten Land"),
 
         dcc.Dropdown(
             id='land_dropdown',
