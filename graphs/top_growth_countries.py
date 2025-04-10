@@ -9,7 +9,7 @@ df_grouped = pd.read_csv('data/df_grouped.csv')
 # Layout-Funktion für das Dashboard
 def create_layout():
     return html.Div([
-        html.H1("Handelswachstum nach Jahr"),
+        html.H1("Länder mit größtem Handelswachstum- bzw. rückgang mit Deutschland zum Vorjahr"),
         
         # Dropdown-Menü für Jahrsauswahl
         dcc.Dropdown(
