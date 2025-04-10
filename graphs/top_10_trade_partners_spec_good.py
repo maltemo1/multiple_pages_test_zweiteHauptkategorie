@@ -13,6 +13,9 @@ csv_path = os.path.join("data", "top10_goods_spec_country_and_year.csv")
 # CSV einlesen
 df = pd.read_csv(csv_path)
 
+# Werte umrechnen (Tausenderwerte auf Originalwerte)
+df[['Ausfuhr: Wert', 'Einfuhr: Wert']] = df[['Ausfuhr: Wert', 'Einfuhr: Wert']].fillna(0) * 1000
+
 # Handelsvolumen berechnen
 df["Handelsvolumen"] = df["Ausfuhr: Wert"] + df["Einfuhr: Wert"]
 
