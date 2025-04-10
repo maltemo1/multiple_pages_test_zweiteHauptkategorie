@@ -9,7 +9,7 @@ df_reduced = pd.read_csv('data/df_reduced.csv')
 # Layout-Funktion für das Graph-Modul
 def create_layout():
     return html.Div([
-        html.H1("Relative Handelsdifferenzen nach Warengruppe"),
+        html.H1("Waren mit größtem Handelswachstum bzw. -rückgang für Deutschland zum Vorjahr"),
         
         # Dropdown-Menü für Jahrsauswahl
         dcc.Dropdown(
