@@ -22,7 +22,7 @@ def formatter(value):
 # Layout-Funktion für das Dash-Layout
 def create_layout():
     return html.Div([
-        html.H1("Handelsdifferenzen nach Warengruppe"),
+        html.H1("Waren mit größten Handelsdifferenzen für Deutschland zum Vorjahr"),
         dcc.Dropdown(
             id='jahr_dropdown_goods',
             options=[{'label': str(j), 'value': j} for j in sorted(df_reduced['Jahr'].unique())],
