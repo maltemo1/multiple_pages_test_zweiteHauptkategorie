@@ -115,6 +115,11 @@ def update_graph(year_selected, ware_selected, land_selected):
         f"➡️ Export-Rang: {export_rank}, Wert: {export_value:,.0f} € ({export_percentage:.2f} %) | "
         f"➡️ Import-Rang: {import_rank}, Wert: {import_value:,.0f} € ({import_percentage:.2f} %)"
     )
+    # oder ähnlicher alternativ-Test:
+    #     (f"Wichtigkeit des Landes für den deutschen Export bzw. Import dieser Warengruppe: "
+    #      f"Unter allen deutschen Exporten und Importen der Warengruppe {selected_label} ({filtered_df['Label'].iloc[0]}) im Jahr {selected_year} "
+    #      f"belegt {selected_land} als Handelspartner den {export_rank}. Platz gemessen am Exportvolumen ({export_value:,.0f} €) "
+    #      f"und den {import_rank}. Platz gemessen am Importvolumen ({import_value:,.0f} €) dieser Warengruppe.")
 
     # Monatsdaten plotten
     fig = go.Figure()
