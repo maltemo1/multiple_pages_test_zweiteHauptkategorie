@@ -30,13 +30,23 @@ df['Monat_Name'] = df['Monat'].map(monatsnamen)
 
 # ---------------- Hilfsfunktionen ------------------
 
+#def determine_step_size(max_value):
+#    thresholds = [5e6, 10e6, 50e6, 100e6, 250e6, 500e6, 1e9, 5e9, 10e9]
+ #   steps =       [1e6, 5e6, 10e6, 25e6, 50e6, 100e6, 250e6, 500e6, 1e9]
+  #  for i, threshold in enumerate(thresholds):
+   #     if max_value < threshold:
+    #        return steps[i]
+    #return 2e9
+
+
 def determine_step_size(max_value):
-    thresholds = [5e6, 10e6, 50e6, 100e6, 250e6, 500e6, 1e9, 5e9, 10e9]
-    steps =       [1e6, 5e6, 10e6, 25e6, 50e6, 100e6, 250e6, 500e6, 1e9]
+    thresholds = [2e4, 5e4, 1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 10e6, 50e6, 100e6, 250e6, 500e6, 1e9, 5e9, 10e9]
+    steps =       [5e3, 1e4, 2e4, 5e4, 1e5, 2e5, 5e5, 1e6, 5e6, 10e6, 25e6, 50e6, 100e6, 250e6, 500e6, 1e9]
     for i, threshold in enumerate(thresholds):
         if max_value < threshold:
             return steps[i]
     return 2e9
+
 
 def formatter(value):
     if value >= 1e9:
