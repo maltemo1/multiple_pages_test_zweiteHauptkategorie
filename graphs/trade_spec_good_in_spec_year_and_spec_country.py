@@ -1,23 +1,27 @@
 import dash
 from dash import dcc, html
-from dash.dependencies import Input, Output
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+import os
 import math
 
-# Daten einlesen
+# Daten aus allen Jahresdateien laden
 jahre = list(range(2014, 2025))
 daten_liste = []
 
+# Pfad korrekt setzen
+base_path = os.path.join(os.path.dirname(__file__), "../data")
+
 for jahr in jahre:
-    pfad = f'data/Handelsdaten_{jahr}.csv'
+    pfad = os.path.join(base_path, f"Handelsdaten_{jahr}.csv")
     try:
         df_jahr = pd.read_csv(pfad, encoding='utf-8')
         daten_liste.append(df_jahr)
     except FileNotFoundError:
         print(f"⚠️ Datei für {jahr} nicht gefunden!")
 
+# Alle Daten zusammenfügen
 df = pd.concat(daten_liste, ignore_index=True)
 
 # Monatsnamen zuweisen
@@ -27,136 +31,132 @@ monatsnamen = {
 }
 df['Monat_Name'] = df['Monat'].map(monatsnamen)
 
-# Funktion zur Formatierung der Y-Achse
+# Tausenderwerte umrechnen
+df[['Ausfuhr: Wert', 'Einfuhr: Wert']] = df[['Ausfuhr: Wert', 'Einfuhr: Wert']].fillna(0) * 1000
+
+# Formatierer für Y-Achse
 def formatter(value):
     if value >= 1e9:
-        return f'{value / 1e9:.2f} Mrd'
+        return f'{value / 1e9:.2f} Mrd €'
     elif value >= 1e6:
-        return f'{value / 1e6:.0f} Mio'
+        return f'{value / 1e6:.0f} Mio €'
     elif value >= 1e3:
-        return f'{value / 1e3:.0f} K'
+        return f'{value / 1e3:.0f} Tsd €'
     else:
-        return str(value)
+        return f'{value:,.0f} €'
 
-# App erstellen
-app = dash.Dash(__name__)
-app.title = "Monatlicher Handelsverlauf"
+# Layout-Funktion
+def create_layout():
+    return html.Div([
+        html.H1("Monatlicher Export- und Importverlauf einer Ware mit einem ausgewählten Land in einem Jahr"),
 
-app.layout = html.Div([
-    html.H1("Monatlicher Handelsverlauf für ausgewählte Waren, Länder und Jahre"),
+        html.Div([
+            dcc.Dropdown(
+                id='trade_spec_good_year_dropdown',
+                options=[{'label': str(j), 'value': j} for j in sorted(df['Jahr'].dropna().unique())],
+                value=2024,
+                clearable=False,
+                style={'width': '100%'}
+            )
+        ], style={'width': '30%', 'display': 'inline-block', 'padding': '0 10px'}),
 
-    html.Div([
-        html.Label("Jahr auswählen:"),
-        dcc.Dropdown(
-            id='jahr_dropdown',
-            options=[{'label': str(j), 'value': j} for j in sorted(df['Jahr'].unique())],
-            value=2024,
-            clearable=False,
-            style={'width': '100%'}
-        ),
-    ], style={'width': '30%', 'display': 'inline-block', 'padding': '0 10px'}),
+        html.Div([
+            dcc.Dropdown(
+                id='trade_spec_good_good_dropdown',
+                options=[{'label': g, 'value': g} for g in sorted(df['Label'].dropna().unique())],
+                value='Pharmazeutische Erzeugnisse',
+                clearable=False,
+                style={'width': '100%'}
+            )
+        ], style={'width': '30%', 'display': 'inline-block', 'padding': '0 10px'}),
 
-    html.Div([
-        html.Label("Ware auswählen:"),
-        dcc.Dropdown(
-            id='ware_dropdown',
-            options=[{'label': str(w), 'value': w} for w in sorted(df['Label'].unique())],
-            value='Pharmazeutische Erzeugnisse',
-            clearable=False,
-            style={'width': '100%'}
-        ),
-    ], style={'width': '30%', 'display': 'inline-block', 'padding': '0 10px'}),
+        html.Div([
+            dcc.Dropdown(
+                id='trade_spec_good_country_dropdown',
+                options=[{'label': l, 'value': l} for l in sorted(df['Land'].dropna().unique())],
+                value='Islamische Republik Iran',
+                clearable=False,
+                style={'width': '100%'}
+            )
+        ], style={'width': '30%', 'display': 'inline-block', 'padding': '0 10px'}),
 
-    html.Div([
-        html.Label("Land auswählen:"),
-        dcc.Dropdown(
-            id='land_dropdown',
-            options=[{'label': str(l), 'value': l} for l in sorted(df['Land'].unique())],
-            value='Islamische Republik Iran',
-            clearable=False,
-            style={'width': '100%'}
-        ),
-    ], style={'width': '30%', 'display': 'inline-block', 'padding': '0 10px'}),
+        html.Div(id='trade_spec_good_info_text', style={'margin-top': '20px', 'font-size': '16px', 'font-weight': 'bold'}),
 
-    html.Div(id='info_text', style={'margin-top': '20px', 'font-size': '16px', 'font-weight': 'bold'}),
+        dcc.Graph(id='trade_spec_good_graph')
+    ])
 
-    dcc.Graph(id='monatlicher_warenhandel_graph')
-])
-
-@app.callback(
-    [Output('monatlicher_warenhandel_graph', 'figure'),
-     Output('info_text', 'children')],
-    [Input('jahr_dropdown', 'value'),
-     Input('ware_dropdown', 'value'),
-     Input('land_dropdown', 'value')]
-)
-def update_graph(year_selected, ware_selected, land_selected):
-    # Daten filtern
-    df_filtered = df[(df['Jahr'] == year_selected) & (df['Label'] == ware_selected)]
-    df_monatlich = df_filtered[df_filtered['Land'] == land_selected]
-
-    # Ranking berechnen
-    export_agg = df_filtered.groupby('Land')['Ausfuhr: Wert'].sum()
-    import_agg = df_filtered.groupby('Land')['Einfuhr: Wert'].sum()
-
-    total_export = export_agg.sum()
-    total_import = import_agg.sum()
-
-    export_rank = export_agg.sort_values(ascending=False).index.get_loc(land_selected) + 1 if land_selected in export_agg else None
-    export_value = export_agg.get(land_selected, 0)
-    export_percentage = (export_value / total_export) * 100 if total_export > 0 else 0
-
-    import_rank = import_agg.sort_values(ascending=False).index.get_loc(land_selected) + 1 if land_selected in import_agg else None
-    import_value = import_agg.get(land_selected, 0)
-    import_percentage = (import_value / total_import) * 100 if total_import > 0 else 0
-
-    info_text = (
-        f"📊 Bedeutung von {land_selected} für '{ware_selected}' im Jahr {year_selected}: "
-        f"➡️ Export-Rang: {export_rank}, Wert: {export_value:,.0f} € ({export_percentage:.2f} %) | "
-        f"➡️ Import-Rang: {import_rank}, Wert: {import_value:,.0f} € ({import_percentage:.2f} %)"
+# Callback-Funktion
+def register_callbacks(app):
+    @app.callback(
+        [dash.Output('trade_spec_good_graph', 'figure'),
+         dash.Output('trade_spec_good_info_text', 'children')],
+        [dash.Input('trade_spec_good_year_dropdown', 'value'),
+         dash.Input('trade_spec_good_good_dropdown', 'value'),
+         dash.Input('trade_spec_good_country_dropdown', 'value')]
     )
-    # oder ähnlicher alternativ-Test:
-    #     (f"Wichtigkeit des Landes für den deutschen Export bzw. Import dieser Warengruppe: "
-    #      f"Unter allen deutschen Exporten und Importen der Warengruppe {selected_label} ({filtered_df['Label'].iloc[0]}) im Jahr {selected_year} "
-    #      f"belegt {selected_land} als Handelspartner den {export_rank}. Platz gemessen am Exportvolumen ({export_value:,.0f} €) "
-    #      f"und den {import_rank}. Platz gemessen am Importvolumen ({import_value:,.0f} €) dieser Warengruppe.")
+    def update_graph(year_selected, good_selected, country_selected):
+        df_filtered = df[(df['Jahr'] == year_selected) & (df['Label'] == good_selected)]
+        df_monatlich = df_filtered[df_filtered['Land'] == country_selected]
 
-    # Monatsdaten plotten
-    fig = go.Figure()
-    for col, name, color in zip(['Ausfuhr: Wert', 'Einfuhr: Wert'],
-                                ['Exportvolumen', 'Importvolumen'],
-                                ['#1f77b4', '#ff7f0e']):
-        fig.add_trace(go.Scatter(
-            x=df_monatlich['Monat_Name'],
-            y=df_monatlich[col],
-            mode='lines+markers',
-            name=name,
-            line=dict(width=2, color=color),
-            hovertemplate=f'<b>{name}</b><br>Monat: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>'
-        ))
+        # Falls keine Daten vorhanden sind
+        if df_monatlich.empty:
+            return go.Figure(), f"Keine Daten für {good_selected} mit {country_selected} im Jahr {year_selected} vorhanden."
 
-    max_value = df_monatlich[['Ausfuhr: Wert', 'Einfuhr: Wert']].values.max()
-    rounded_max = math.ceil(max_value * 1.1)
+        fig = go.Figure()
 
-    # Dynamische Schrittweite (kleiner & angepasst)
-    steps = [1e3, 5e3, 1e4, 5e4, 1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 1e7,
-             2e7, 5e7, 1e8, 2e8, 5e8, 1e9, 2e9, 5e9, 1e10, 2e10, 5e10]
-    step = next((s for s in steps if rounded_max / s <= 10), steps[-1])
-    tickvals = np.arange(0, rounded_max + step, step)
-    ticktext = [formatter(val) for val in tickvals]
+        for col, name, color in zip(
+            ['Ausfuhr: Wert', 'Einfuhr: Wert'],
+            ['Exportwert', 'Importwert'],
+            ['#1f77b4', '#ff7f0e']
+        ):
+            fig.add_trace(go.Scatter(
+                x=df_monatlich['Monat_Name'],
+                y=df_monatlich[col],
+                mode='lines+markers',
+                name=name,
+                line=dict(width=2, color=color),
+                hovertemplate=f"<b>{name}</b><br>Monat: %{{x}}<br>Wert: %{{y:,.0f}} €<extra></extra>"
+            ))
 
-    fig.update_layout(
-        title=f'Monatlicher Verlauf – {ware_selected} ({year_selected}) – {land_selected}',
-        xaxis_title='Monat',
-        yaxis_title='Wert in Euro',
-        xaxis=dict(tickmode='array', tickvals=list(monatsnamen.values())),
-        yaxis=dict(tickvals=tickvals, ticktext=ticktext),
-        legend=dict(x=0, y=1.15, orientation='h'),
-        margin=dict(l=60, r=20, t=80, b=50),
-        height=600
-    )
+        # Y-Achsenformatierung
+        max_value = df_monatlich[['Ausfuhr: Wert', 'Einfuhr: Wert']].values.max()
+        step = max_value / 5 if max_value > 0 else 1
+        tickvals = np.arange(0, max_value + step, step)
+        ticktext = [formatter(val) for val in tickvals]
 
-    return fig, info_text
+        fig.update_layout(
+            title=f'Monatlicher Handelsverlauf: {good_selected} mit {country_selected} ({year_selected})',
+            xaxis_title='Monat',
+            yaxis_title='Wert in €',
+            yaxis=dict(
+                tickvals=tickvals,
+                ticktext=ticktext
+            ),
+            legend=dict(title='Kategorie', bgcolor='rgba(255,255,255,0.7)'),
+            margin=dict(l=40, r=40, t=60, b=40)
+        )
 
-if __name__ == '__main__':
-    app.run(debug=True)
+        # Ranking-Logik
+        export_agg = df_filtered.groupby('Land')['Ausfuhr: Wert'].sum()
+        import_agg = df_filtered.groupby('Land')['Einfuhr: Wert'].sum()
+
+        total_export = export_agg.sum()
+        total_import = import_agg.sum()
+
+        export_value = export_agg.get(country_selected, 0)
+        import_value = import_agg.get(country_selected, 0)
+
+        export_rank = export_agg.sort_values(ascending=False).index.get_loc(country_selected) + 1 if country_selected in export_agg else "-"
+        import_rank = import_agg.sort_values(ascending=False).index.get_loc(country_selected) + 1 if country_selected in import_agg else "-"
+
+        export_percent = (export_value / total_export) * 100 if total_export > 0 else 0
+        import_percent = (import_value / total_import) * 100 if total_import > 0 else 0
+
+        info_text = (
+            f"{country_selected} war im Jahr {year_selected} "
+            f"Deutschlands <b>{export_rank}. größter Exportpartner</b> ({export_percent:.2f}% des Exports) "
+            f"und <b>{import_rank}. größter Importpartner</b> ({import_percent:.2f}% des Imports) "
+            f"für die Ware <b>{good_selected}</b>."
+        )
+
+        return fig, info_text
