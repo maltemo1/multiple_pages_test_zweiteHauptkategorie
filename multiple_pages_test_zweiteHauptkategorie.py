@@ -62,6 +62,9 @@ def create_nav_structure():
             "Überblick nach bestimmtem Land": {
                 "Deutschlands gesamter Export- und Importverlauf einer Ware mit einem Land": "overview_trade_spec_good_with_spec_country_2008_until_2024"
             },
+            "Überblick nach bestimmtem Jahr und Land": {
+                "Deutschlands Verlauf von Export- und Importwerten für eine Ware in einem Jahr für einen ausgewählten Handelspartner": "trade_spec_good_in_spec_year_and_spec_country"
+            },
             "Überblick nach bestimmten Länder und Waren": {
                 "Export- und Importverlauf (jährlich) mehrerer Waren für ein Land": "trade_spec_country_and_several_goods_from_2008_2024",
                 "Export- und Importverlauf (jährlich) einer Ware für mehrere Länder": "trade_spec_good_and_several_countries_from_2008_2024"
