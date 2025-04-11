@@ -146,14 +146,40 @@ def register_callbacks(app):
         export_rank = export_agg.sort_values(ascending=False).index.get_loc(selected_country) + 1 if selected_country in export_agg else None
         import_rank = import_agg.sort_values(ascending=False).index.get_loc(selected_country) + 1 if selected_country in import_agg else None
 
-        export_value = export_agg.get(selected_country, 0) / 1e9
-        import_value = import_agg.get(selected_country, 0) / 1e9
+        export_value = export_agg.get(selected_country, 0)
+        import_value = import_agg.get(selected_country, 0)
 
         export_percent = (export_value * 1e9 / total_export) * 100 if total_export > 0 else 0
         import_percent = (import_value * 1e9 / total_import) * 100 if total_import > 0 else 0
 
-        info_text = (f"Export-Rang: {export_rank} ({export_value:.2f} Mrd €, {export_percent:.2f}%) | "
-                     f"Import-Rang: {import_rank} ({import_value:.2f} Mrd €, {import_percent:.2f}%) "
-                     f"→ Jahr: {selected_year}, Ware: {selected_ware}, Land: {selected_country}")
+        
+        # old:
+        #info_text = (f"Export-Rang: {export_rank} ({export_value:.2f} Mrd €, {export_percent:.2f}%) | "
+        #             f"Import-Rang: {import_rank} ({import_value:.2f} Mrd €, {import_percent:.2f}%) "
+        #             f"→ Jahr: {selected_year}, Ware: {selected_ware}, Land: {selected_country}")
+
+        
+        # new:
+        info_text = (
+            f"{selected_country} war im Jahr {selected_year} "
+            f"Deutschlands <b>{export_rank}. größter Exportpartner</b> "
+            f"und <b>{import_rank}. größter Importpartner</b> "
+            f"für die Ware <b>{selected_ware}</b>."
+        )
+
+        
+        #
+        # Ranking-Logik
+        #export_percent = (export_value / total_export) * 100 if total_export > 0 else 0
+        #import_percent = (import_value / total_import) * 100 if total_import > 0 else 0
+
+        #info_text = (
+        #    f"{country_selected} war im Jahr {year_selected} "
+        #    f"Deutschlands <b>{export_rank}. größter Exportpartner</b> "
+        #    f"und <b>{import_rank}. größter Importpartner</b> "
+        #    f"für die Ware <b>{good_selected}</b>."
+        #)
+        #
+
 
         return fig, info_text
