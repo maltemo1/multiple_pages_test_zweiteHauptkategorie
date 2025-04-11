@@ -162,9 +162,9 @@ def register_callbacks(app):
         # new:
         info_text = (
             f"{selected_country} war im Jahr {selected_year} "
-            f"Deutschlands <b>{export_rank}. größter Exportpartner</b> "
-            f"und <b>{import_rank}. größter Importpartner</b> "
-            f"für die Ware <b>{selected_ware}</b>."
+            f"Deutschlands {export_rank}. größter Exportpartner "
+            f"und {import_rank}. größter Importpartner "
+            f"für die Ware {selected_ware}."
         )
 
         
